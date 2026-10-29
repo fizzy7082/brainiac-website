@@ -400,3 +400,138 @@
     }).then(function () { btn.disabled = false; btn.textContent = label; });
   });
 })();
+
+/* =====================================================================
+   Motion layer v5: word reveals, spotlight, magnetic buttons,
+   timeline draw, price count-up, page transitions
+   ===================================================================== */
+(function () {
+  "use strict";
+  var reduce = false, fine = false;
+  try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+  try { fine = window.matchMedia("(pointer: fine)").matches; } catch (e) {}
+  if (reduce) return;
+  var $all = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var root = document.documentElement;
+  root.classList.add("motion");
+
+  /* Split a heading into words (keeps inner elements like <em> intact) */
+  function splitWords(el) {
+    if (el.getAttribute("data-split")) return;
+    el.setAttribute("data-split", "1");
+    el.setAttribute("aria-label", el.textContent.replace(/\s+/g, " ").trim());
+    var i = 0;
+    function walk(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (n) {
+        if (n.nodeType === 3) {
+          var parts = n.textContent.split(/(\s+)/);
+          var frag = document.createDocumentFragment();
+          parts.forEach(function (p) {
+            if (!p) return;
+            if (/^\s+$/.test(p)) { frag.appendChild(document.createTextNode(p)); return; }
+            var w = document.createElement("span"); w.className = "w"; w.setAttribute("aria-hidden", "true");
+            var inner = document.createElement("span"); inner.className = "wi"; inner.textContent = p;
+            inner.style.setProperty("--wd", (i++ * 0.055).toFixed(3) + "s");
+            w.appendChild(inner); frag.appendChild(w);
+          });
+          n.parentNode.replaceChild(frag, n);
+        } else if (n.nodeType === 1 && n.tagName !== "BR") { walk(n); }
+      });
+    }
+    walk(el);
+  }
+
+  /* Hero headline: words rise on load */
+  var heroH = document.querySelector(".hero h1");
+  if (heroH) { splitWords(heroH); requestAnimationFrame(function () { requestAnimationFrame(function () { heroH.classList.add("words-in"); }); }); }
+
+  /* Section headings: words rise when scrolled into view */
+  var heads = $all(".section-head h2, .split-copy h2, .intro h2, .cta-inner h2");
+  heads.forEach(splitWords);
+  if ("IntersectionObserver" in window) {
+    var ho = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("words-in"); ho.unobserve(e.target); } });
+    }, { threshold: 0.3 });
+    heads.forEach(function (h) {
+      if (h.getBoundingClientRect().top < window.innerHeight * 0.95) h.classList.add("words-in"); else ho.observe(h);
+    });
+    setTimeout(function () { heads.forEach(function (h) { h.classList.add("words-in"); }); }, 4200);
+
+    /* Process timeline draws in */
+    $all(".process").forEach(function (p) {
+      var po = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { p.classList.add("drawn"); po.disconnect(); } }); }, { threshold: 0.35 });
+      po.observe(p);
+      setTimeout(function () { p.classList.add("drawn"); }, 4200);
+    });
+
+    /* Prices count up when a package carousel comes into view */
+    $all(".carousel--plans").forEach(function (car) {
+      var done = false;
+      function run() {
+        if (done) return; done = true;
+        $all(".price b", car).forEach(function (b) {
+          var txt = b.textContent, target = parseInt(txt.replace(/[^0-9]/g, ""), 10);
+          if (!target) return;
+          var start = null, dur = 1100;
+          b.style.minWidth = b.offsetWidth + "px";
+          function tick(t) {
+            if (!start) start = t;
+            var k = Math.min(1, (t - start) / dur), e = 1 - Math.pow(1 - k, 3);
+            b.textContent = "$" + Math.round(target * e).toLocaleString("en-US");
+            if (k < 1) requestAnimationFrame(tick); else b.textContent = txt;
+          }
+          requestAnimationFrame(tick);
+        });
+      }
+      var co = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { run(); co.disconnect(); } }); }, { threshold: 0.3 });
+      co.observe(car);
+    });
+  }
+
+  if (fine) {
+    /* Cursor spotlight on cards and dark bands */
+    var spots = $all(".service-card, .plan, .tcard2, .term, .channel, .band--navy, .cta-band");
+    spots.forEach(function (el) {
+      el.classList.add("spot");
+      el.addEventListener("pointermove", function (e) {
+        var r = el.getBoundingClientRect();
+        el.style.setProperty("--mx", (e.clientX - r.left) + "px");
+        el.style.setProperty("--my", (e.clientY - r.top) + "px");
+      });
+    });
+
+    /* Magnetic buttons */
+    $all(".btn--primary, .carousel-btn, .wa-btn").forEach(function (b) {
+      b.addEventListener("pointermove", function (e) {
+        var r = b.getBoundingClientRect();
+        var x = (e.clientX - r.left - r.width / 2) * 0.18, y = (e.clientY - r.top - r.height / 2) * 0.28;
+        b.style.setProperty("--bx", x.toFixed(1) + "px"); b.style.setProperty("--by", y.toFixed(1) + "px");
+      });
+      b.addEventListener("pointerleave", function () { b.style.setProperty("--bx", "0px"); b.style.setProperty("--by", "0px"); });
+    });
+  }
+
+  /* Hero parallax on scroll */
+  var art = document.querySelector(".hero-art");
+  if (art) {
+    var tk = false;
+    window.addEventListener("scroll", function () {
+      if (tk) return; tk = true;
+      requestAnimationFrame(function () { tk = false; var y = Math.min(window.scrollY, 900); art.style.setProperty("--py", (y * -0.08).toFixed(1) + "px"); });
+    }, { passive: true });
+  }
+
+  /* Smooth fade between pages */
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest("a[href]");
+    if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    var href = a.getAttribute("href");
+    if (!href || a.target === "_blank" || href.charAt(0) === "#" || /^(mailto:|tel:|https?:)/i.test(href)) return;
+    var path = href.split("#")[0];
+    if (!path || path === location.pathname.split("/").pop()) return;
+    e.preventDefault();
+    root.classList.add("leaving");
+    setTimeout(function () { location.href = href; }, 260);
+  });
+  window.addEventListener("pageshow", function () { root.classList.remove("leaving"); });
+})();
