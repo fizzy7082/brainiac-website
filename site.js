@@ -546,3 +546,44 @@
     row.parentNode.insertBefore(hint, row.nextSibling);
   });
 })();
+
+/* Cookie consent + analytics events */
+(function () {
+  function g() { if (typeof window.gtag === "function") window.gtag.apply(null, arguments); }
+  var box = document.getElementById("cookie");
+  var stored = null;
+  try { stored = localStorage.getItem("bma-consent"); } catch (e) {}
+  function show() { if (box) box.hidden = false; }
+  function hide() { if (box) box.hidden = true; }
+  if (box && !stored) setTimeout(show, 1200);
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-consent]");
+    if (b) {
+      var yes = b.getAttribute("data-consent") === "yes";
+      try { localStorage.setItem("bma-consent", yes ? "yes" : "no"); } catch (err) {}
+      g("consent", "update", { analytics_storage: yes ? "granted" : "denied" });
+      hide();
+      return;
+    }
+    if (e.target.closest("[data-cookie-settings]")) { show(); return; }
+
+    /* Track contact intent */
+    var a = e.target.closest("a[href]");
+    if (!a) return;
+    var href = a.getAttribute("href") || "";
+    if (href.indexOf("wa.me/") > -1) g("event", "whatsapp_click", { link_url: href, page_path: location.pathname });
+    else if (href.indexOf("mailto:") === 0) g("event", "email_click", { page_path: location.pathname });
+    else if (/contact\.html/.test(href) && a.classList.contains("btn")) g("event", "cta_click", { link_text: (a.textContent || "").trim().slice(0, 60), page_path: location.pathname });
+  });
+  var form = document.getElementById("contact-form");
+  if (form) form.addEventListener("submit", function () {
+    setTimeout(function () {
+      if (!document.querySelector(".field.invalid")) {
+        var sel = document.getElementById("f-service");
+        g("event", "generate_lead", { service: sel ? sel.value : "", page_path: location.pathname });
+      }
+    }, 0);
+  });
+  var leak = document.querySelector(".lc-cta");
+  if (leak) leak.addEventListener("click", function () { g("event", "store_check_cta", {}); });
+})();
