@@ -205,6 +205,42 @@
     buildDots();
   });
 
+  /* ---------- Store leak check ---------- */
+  var leak = $("#leak-check");
+  if (leak) {
+    var qsEls = $all(".lc-q", leak), msg = $(".lc-msg", leak), cta = $(".lc-cta", leak), meter = $all(".lc-meter i", leak);
+    var answers = {};
+    var labels = { shipping: "shipping and delivery info", mobile: "mobile navigation", cart: "abandoned-cart emails", trust: "trust signals near Add to cart", seo: "collection page SEO" };
+    function render() {
+      var keys = qsEls.map(function (q) { return q.getAttribute("data-q"); });
+      var done = keys.filter(function (k) { return answers[k]; }).length;
+      var leaks = keys.filter(function (k) { return answers[k] === "no"; });
+      keys.forEach(function (k, i) { meter[i].className = answers[k] === "no" ? "on-no" : answers[k] === "yes" ? "on-yes" : ""; });
+      cta.classList.toggle("is-hot", leaks.length > 0);
+      if (!done) { msg.textContent = "Answer the questions to see how many sales leaks your store may have."; cta.firstChild.textContent = "Get my free store review "; return; }
+      if (done < keys.length) {
+        msg.innerHTML = leaks.length ? "So far: <b>" + leaks.length + " possible leak" + (leaks.length > 1 ? "s" : "") + "</b>. Keep going." : (keys.length - done) + " to go.";
+        return;
+      }
+      if (!leaks.length) {
+        msg.innerHTML = "<b>Nice, your basics look solid.</b> The next gains are usually hidden in the details. Want us to find them?";
+        cta.firstChild.textContent = "Find my hidden opportunities ";
+      } else {
+        msg.innerHTML = "<b>Your store may be losing sales in " + leaks.length + " place" + (leaks.length > 1 ? "s" : "") + ".</b> Each one is fixable, and we can show you how.";
+        cta.firstChild.textContent = "Show me how to fix " + (leaks.length > 1 ? "them" : "it") + " ";
+      }
+      try { sessionStorage.setItem("brainiacLeaks", leaks.map(function (k) { return labels[k]; }).join(", ")); } catch (e) {}
+    }
+    leak.addEventListener("click", function (e) {
+      var b = e.target.closest(".lc-btns button"); if (!b) return;
+      var q = b.closest(".lc-q"), k = q.getAttribute("data-q"), a = b.getAttribute("data-a");
+      answers[k] = a;
+      $all("button", q).forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      q.classList.toggle("is-yes", a === "yes"); q.classList.toggle("is-no", a === "no");
+      render();
+    });
+  }
+
   /* ---------- Portfolio filters ---------- */
   $all(".filters").forEach(function (group) {
     var grid = document.getElementById(group.getAttribute("data-target"));
@@ -245,6 +281,11 @@
   }
   preselect();
   window.addEventListener("hashchange", preselect);
+  try {
+    var lk = sessionStorage.getItem("brainiacLeaks");
+    var det = $("#f-details");
+    if (lk && det && !det.value) det.value = "I took the store check on your website. Areas to look at: " + lk + ".\n\nMy store: ";
+  } catch (e) {}
 
   var rules = {
     "f-name": function (v) { return v.trim().length >= 2 ? "" : "Enter your full name."; },

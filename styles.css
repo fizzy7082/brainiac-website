@@ -990,3 +990,32 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; }
 .carousel--static .carousel-controls { display: none; }
 .tcard2 figcaption .t-avatar { display: grid; place-items: center; color: var(--white); font-size: .92rem; font-weight: 800; letter-spacing: .02em; background: linear-gradient(135deg, var(--navy-900), #26346e); }
 .tcard2 figcaption .t-avatar--ph { background: var(--ivory); }
+
+/* ---------- Store leak check (curiosity CTA) ---------- */
+.leak { background: var(--navy-900); color: var(--on-navy-dim); border-radius: 22px; padding: clamp(24px, 3vw, 34px); display: grid; gap: 20px; position: relative; overflow: hidden; box-shadow: 0 40px 80px -40px rgba(11,16,32,.7); isolation: isolate; }
+.leak::before { content: ""; position: absolute; width: 420px; height: 420px; right: -160px; top: -200px; border-radius: 50%; background: radial-gradient(closest-side, rgba(69,104,255,.45), transparent); z-index: -1; animation: drift 12s ease-in-out infinite alternate; }
+.leak header { display: grid; gap: 8px; }
+.leak-kicker { justify-self: start; font: 600 10.5px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: #b9c6ff; background: rgba(69,104,255,.18); padding: 7px 10px; border-radius: 999px; }
+.leak h3 { color: var(--white); font-size: clamp(1.4rem, 1.1rem + 1vw, 1.85rem); letter-spacing: -.03em; }
+.leak header p { font-size: .95rem; }
+.lc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.lc-q { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; padding: 12px 12px 12px 16px; border-radius: 12px; background: var(--navy-800); border: 1px solid var(--navy-line); transition: border-color .25s ease, background-color .25s ease; }
+.lc-text { font-size: .93rem; color: var(--on-navy); line-height: 1.4; min-width: 0; }
+.lc-btns { display: flex; gap: 6px; }
+.lc-btns button { font: 700 .82rem/1 var(--font-sans); padding: 9px 13px; border-radius: 999px; cursor: pointer; border: 1px solid var(--navy-line); background: transparent; color: var(--on-navy-dim); transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
+.lc-btns button:hover { border-color: var(--electric-hi); color: var(--white); }
+.lc-btns button[data-a="yes"][aria-pressed="true"] { background: rgba(46, 204, 113, .16); border-color: rgba(46, 204, 113, .55); color: #8ff0b5; }
+.lc-btns button[data-a="no"][aria-pressed="true"] { background: rgba(255, 128, 100, .16); border-color: rgba(255, 128, 100, .6); color: #ffb3a1; }
+.lc-q.is-yes { border-color: rgba(46, 204, 113, .35); }
+.lc-q.is-no { border-color: rgba(255, 128, 100, .45); background: #1b1d2b; }
+.lc-result { display: grid; gap: 10px; }
+.lc-meter { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.lc-meter i { height: 6px; border-radius: 4px; background: var(--navy-line); transition: background-color .35s ease; }
+.lc-meter i.on-no { background: #ff8a6a; }
+.lc-meter i.on-yes { background: #3ccf7f; }
+.lc-msg { font-size: .98rem; color: var(--on-navy); min-height: 1.6em; }
+.lc-msg b { color: var(--white); }
+.lc-cta { justify-self: start; }
+.lc-cta.is-hot { animation: pulse 2.2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 8px 22px -10px rgba(69,104,255,.8), 0 0 0 0 rgba(69,104,255,.45); } 50% { box-shadow: 0 8px 22px -10px rgba(69,104,255,.8), 0 0 0 10px rgba(69,104,255,0); } }
+@media (max-width: 520px) { .lc-q { grid-template-columns: 1fr; } .lc-cta { justify-self: stretch; } }
