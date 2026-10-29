@@ -89,6 +89,69 @@
     });
   }
 
+  var reduce = false;
+  try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+
+  /* ---------- Scroll progress + header state ---------- */
+  var header = $(".site-header");
+  var bar = document.createElement("div"); bar.className = "progress"; bar.setAttribute("aria-hidden", "true"); bar.innerHTML = "<i></i>";
+  document.body.appendChild(bar);
+  var ticking = false;
+  function onScroll() {
+    ticking = false;
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.setProperty("--p", h > 0 ? Math.min(1, window.scrollY / h) : 0);
+    if (header) header.classList.toggle("is-scrolled", window.scrollY > 24);
+  }
+  window.addEventListener("scroll", function () { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  onScroll();
+
+  /* ---------- Reveal on scroll ---------- */
+  var AUTO = ".page-hero .hero-copy, .section-head, .service-card, .value, .work, .case-study, .term, .faq, .table-wrap, .mv article, .values-grid > div, .expertise, .channel, .form-card, .service-detail, .tcard, .split-copy, .audit, .intro, .cta-inner > div, .prose";
+  if (!reduce && "IntersectionObserver" in window) {
+    $all(AUTO).forEach(function (el) { if (!el.closest(".hero--v2")) el.setAttribute("data-reveal", ""); });
+    // stagger siblings inside groups
+    $all("[data-reveal-group], .services-grid, .works, .terms-grid, .channels, .values, .values-grid").forEach(function (g) {
+      $all(":scope > [data-reveal]", g).forEach(function (el, i) { el.style.setProperty("--rd", (Math.min(i, 6) * 0.07) + "s"); });
+    });
+    var items = $all("[data-reveal]");
+    var vh = window.innerHeight;
+    items.forEach(function (el) { if (el.getBoundingClientRect().top < vh * 0.95) el.classList.add("is-in"); });
+    document.documentElement.classList.add("reveal-on");
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add("is-in"); io.unobserve(en.target); } });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+    items.forEach(function (el) { if (!el.classList.contains("is-in")) io.observe(el); });
+    // safety net: never leave content hidden
+    setTimeout(function () { items.forEach(function (el) { el.classList.add("is-in"); }); }, 4000);
+  }
+
+  /* ---------- Pointer tilt (hero art, work cards) ---------- */
+  var fine = false;
+  try { fine = window.matchMedia("(pointer: fine)").matches; } catch (e) {}
+  if (fine && !reduce) {
+    var art = $(".hero-art");
+    if (art) {
+      var heroEl = art.closest(".hero");
+      heroEl.addEventListener("mousemove", function (e) {
+        var r = heroEl.getBoundingClientRect();
+        var x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+        art.style.setProperty("--ry", (x * 6).toFixed(2) + "deg");
+        art.style.setProperty("--rx", (-y * 5).toFixed(2) + "deg");
+      });
+      heroEl.addEventListener("mouseleave", function () { art.style.setProperty("--ry", "0deg"); art.style.setProperty("--rx", "0deg"); });
+    }
+    $all(".work").forEach(function (card) {
+      card.addEventListener("mousemove", function (e) {
+        var r = card.getBoundingClientRect();
+        var x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+        card.style.setProperty("--ty", (x * 4).toFixed(2) + "deg");
+        card.style.setProperty("--tx", (-y * 4).toFixed(2) + "deg");
+      });
+      card.addEventListener("mouseleave", function () { card.style.setProperty("--ty", "0deg"); card.style.setProperty("--tx", "0deg"); });
+    });
+  }
+
   /* ---------- Portfolio filters ---------- */
   $all(".filters").forEach(function (group) {
     var grid = document.getElementById(group.getAttribute("data-target"));
