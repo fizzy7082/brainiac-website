@@ -913,3 +913,80 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; }
   .work-stage .stage, .hero-art { transform: none !important; }
   .ha-desk, .ha-phone, .ha-dash, .ha-bars, .hero--v2::before, .hero h1 em, .plan--featured::before { animation: none !important; }
 }
+
+/* Starter package: slim full-width card under the four */
+.plan--starter { margin-top: 16px; grid-template-columns: 1.3fr auto 1.6fr auto; grid-template-rows: auto; align-items: center; gap: 20px 32px; padding: 26px 28px; }
+.starter-head { display: grid; gap: 8px; min-width: 0; }
+.plan--starter .price { border-bottom: 0; padding: 0 0 0 28px; border-left: 1px solid var(--line); }
+.plan--starter .btn { width: auto; white-space: nowrap; }
+.plan-list--2 { grid-template-columns: 1fr 1fr; column-gap: 20px; }
+.plan-label--quiet { color: var(--slate); border-color: var(--line); }
+@media (max-width: 1180px) { .plan--starter { grid-template-columns: 1fr auto; max-width: 900px; } .plan--starter .plan-list, .plan--starter .btn { grid-column: 1 / -1; } .plan--starter .btn { width: 100%; } }
+@media (max-width: 640px) { .plan--starter { grid-template-columns: 1fr; } .plan--starter .price { border-left: 0; padding: 0 0 14px; border-bottom: 1px solid var(--line); } .plan-list--2 { grid-template-columns: 1fr; } }
+
+/* =====================================================================
+   v4: reusable carousel, package carousel, testimonials
+   ===================================================================== */
+.carousel { position: relative; --gap: 18px; --per: 3; }
+.carousel-track {
+  display: grid; grid-auto-flow: column;
+  grid-auto-columns: calc((100% - (var(--per) - 1) * var(--gap)) / var(--per));
+  gap: var(--gap); overflow-x: auto; overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none;
+  padding: 14px 4px 28px; margin: -14px -4px -28px;
+}
+.carousel-track::-webkit-scrollbar { display: none; }
+.carousel-track:focus-visible { outline: 3px solid var(--electric-hi); outline-offset: 4px; border-radius: 16px; }
+.carousel-slide { scroll-snap-align: start; min-width: 0; display: grid; }
+.carousel-controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 28px; }
+.carousel-dots { display: flex; gap: 8px; flex-wrap: wrap; }
+.carousel-dot { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 999px; background: #c9cfdd; cursor: pointer; transition: width .35s cubic-bezier(.2,.7,.2,1), background-color .3s ease; }
+.carousel-dot[aria-current="true"] { width: 28px; background: var(--electric); }
+.carousel-arrows { display: flex; gap: 10px; }
+.carousel-btn { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; border: 1px solid var(--line); background: var(--white); color: var(--navy-900); transition: background-color .2s ease, color .2s ease, border-color .2s ease, translate .2s ease; }
+.carousel-btn svg { width: 20px; height: 20px; }
+.carousel-btn:hover:not(:disabled) { background: var(--navy-900); color: var(--white); border-color: var(--navy-900); }
+.carousel-btn:active:not(:disabled) { translate: 0 1px; }
+.carousel-btn:disabled { opacity: .35; cursor: default; }
+@media (max-width: 1080px) { .carousel { --per: 2; } }
+@media (max-width: 680px) { .carousel { --per: 1.12; --gap: 14px; } }
+
+/* Packages carousel */
+.carousel--plans { --per: 4; }
+.carousel--plans .plan { height: 100%; }
+.carousel--plans .plan:hover { translate: 0 -6px; }
+@media (max-width: 1180px) { .carousel--plans { --per: 3; } }
+@media (max-width: 900px) { .carousel--plans { --per: 2; } }
+@media (max-width: 600px) { .carousel--plans { --per: 1.1; } }
+
+/* Testimonials */
+.section-head--center { margin-inline: auto; text-align: center; justify-items: center; max-width: 760px; }
+.t-section .placeholder-note { max-width: 860px; margin-inline: auto; margin-bottom: 32px; }
+.tcard2 {
+  margin: 0; height: 100%; background: var(--white); border: 1px solid var(--line); border-radius: 22px;
+  padding: 30px 28px 26px; display: grid; grid-template-rows: auto 1fr auto; gap: 20px;
+  box-shadow: 0 1px 2px rgba(11,16,32,.04), 0 18px 40px -28px rgba(11,16,32,.25);
+  transition: translate .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s ease, border-color .35s ease;
+}
+.tcard2:hover { translate: 0 -5px; border-color: #cfd6ea; box-shadow: 0 2px 4px rgba(11,16,32,.05), 0 30px 60px -30px rgba(11,16,32,.38); }
+.t-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.t-svc { font: 600 10.5px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--electric); background: var(--electric-soft); padding: 7px 10px; border-radius: 999px; }
+.t-stars { display: inline-flex; gap: 2px; color: #f5a524; }
+.t-stars svg { width: 16px; height: 16px; }
+.tcard2 blockquote { margin: 0; position: relative; font-size: 1.04rem; line-height: 1.65; color: var(--charcoal); padding-top: 26px; }
+.tcard2 blockquote::before { content: "\201C"; position: absolute; top: -6px; left: -2px; font: 600 3.4rem/1 var(--font-serif); color: var(--electric); opacity: .4; }
+.tcard2--ph blockquote { color: var(--mist); }
+.tcard2--ph blockquote b { color: var(--slate); font-weight: 700; }
+.tcard2 figcaption { display: grid; grid-template-columns: 48px 1fr; gap: 14px; align-items: center; border-top: 1px solid var(--line); padding-top: 18px; }
+.t-avatar, .t-photo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.t-avatar { display: grid; place-items: center; background: var(--navy-900); color: var(--white); font-weight: 800; }
+.t-avatar--ph { background: var(--ivory); border: 1.5px dashed #c7cdda; }
+.tcard2 figcaption b { display: block; color: var(--navy-900); }
+.tcard2 figcaption span { display: block; font-size: .86rem; color: var(--mist); }
+.tcard2 .tag-ph { font: 600 10px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: #7a5a00; background: #fff4d6; border: 1px dashed #e0b547; padding: 6px 9px; border-radius: 999px; }
+.carousel--t .carousel-controls { justify-content: center; flex-direction: column-reverse; gap: 18px; }
+.cta-band--story { padding-block: clamp(72px, 9vw, 120px); }
+
+.carousel--static .carousel-controls { display: none; }
+.tcard2 figcaption .t-avatar { display: grid; place-items: center; color: var(--white); font-size: .92rem; font-weight: 800; letter-spacing: .02em; background: linear-gradient(135deg, var(--navy-900), #26346e); }
+.tcard2 figcaption .t-avatar--ph { background: var(--ivory); }

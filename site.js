@@ -107,7 +107,7 @@
   onScroll();
 
   /* ---------- Reveal on scroll ---------- */
-  var AUTO = ".page-hero .hero-copy, .section-head, .service-card, .value, .work, .case-study, .term, .faq, .table-wrap, .mv article, .values-grid > div, .expertise, .channel, .form-card, .service-detail, .tcard, .split-copy, .audit, .intro, .cta-inner > div, .prose";
+  var AUTO = ".page-hero .hero-copy, .section-head, .service-card, .value, .work, .case-study, .term, .faq, .table-wrap, .mv article, .values-grid > div, .expertise, .channel, .form-card, .service-detail, .tcard, .split-copy, .audit, .intro, .cta-inner > div, .prose, .carousel, .t-section .placeholder-note";
   if (!reduce && "IntersectionObserver" in window) {
     $all(AUTO).forEach(function (el) { if (!el.closest(".hero--v2")) el.setAttribute("data-reveal", ""); });
     // stagger siblings inside groups
@@ -151,6 +151,59 @@
       card.addEventListener("mouseleave", function () { card.style.setProperty("--ty", "0deg"); card.style.setProperty("--tx", "0deg"); });
     });
   }
+
+  /* ---------- Carousels (packages, testimonials) ---------- */
+  $all(".carousel").forEach(function (car) {
+    var track = $(".carousel-track", car);
+    var slides = $all(".carousel-slide", car);
+    var dotsWrap = $(".carousel-dots", car);
+    var prev = $('.carousel-btn[data-dir="-1"]', car), next = $('.carousel-btn[data-dir="1"]', car);
+    if (!track || !slides.length) return;
+    var positions = 1;
+
+    function step() {
+      if (slides.length < 2) return track.clientWidth;
+      return slides[1].offsetLeft - slides[0].offsetLeft;
+    }
+    function visible() { var g = parseFloat(getComputedStyle(track).columnGap) || 0; return Math.max(1, Math.floor((track.clientWidth + g + 2) / step())); }
+    function current() { return Math.round(track.scrollLeft / step()); }
+    function goTo(i) {
+      i = Math.max(0, Math.min(positions - 1, i));
+      track.scrollTo({ left: i * step(), behavior: reduce ? "auto" : "smooth" });
+    }
+    function buildDots() {
+      positions = Math.max(1, slides.length - visible() + 1);
+      dotsWrap.innerHTML = "";
+      for (var i = 0; i < positions; i++) {
+        var d = document.createElement("button");
+        d.type = "button"; d.className = "carousel-dot";
+        d.setAttribute("aria-label", "Go to slide " + (i + 1));
+        (function (n) { d.addEventListener("click", function () { goTo(n); }); })(i);
+        dotsWrap.appendChild(d);
+      }
+      car.classList.toggle("carousel--static", positions < 2);
+      update();
+    }
+    function update() {
+      var c = Math.min(current(), positions - 1);
+      $all(".carousel-dot", dotsWrap).forEach(function (d, i) { d.setAttribute("aria-current", i === c ? "true" : "false"); });
+      if (prev) prev.disabled = track.scrollLeft <= 4;
+      if (next) next.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 4;
+    }
+    if (prev) prev.addEventListener("click", function () { goTo(current() - 1); });
+    if (next) next.addEventListener("click", function () { goTo(current() + 1); });
+    track.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowRight") { e.preventDefault(); goTo(current() + 1); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(current() - 1); }
+      else if (e.key === "Home") { e.preventDefault(); goTo(0); }
+      else if (e.key === "End") { e.preventDefault(); goTo(positions - 1); }
+    });
+    var st;
+    track.addEventListener("scroll", function () { clearTimeout(st); st = setTimeout(update, 60); }, { passive: true });
+    var rt;
+    window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(buildDots, 150); });
+    buildDots();
+  });
 
   /* ---------- Portfolio filters ---------- */
   $all(".filters").forEach(function (group) {
