@@ -1307,3 +1307,54 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; }
 .linklike { background: none; border: 0; padding: 0; font: inherit; color: var(--on-navy-dim); cursor: pointer; }
 .linklike:hover { color: var(--white); text-decoration: underline; }
 @media (max-width: 680px) { .cookie { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); } .cookie-btns .btn { flex: 1; } }
+
+/* =====================================================================
+   v8 conversion pass: 9 services, free review, FAQ, service facts
+   ===================================================================== */
+.services-grid--9 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 1080px) { .services-grid--9 { grid-template-columns: repeat(2, 1fr); } }
+
+.review { background:
+  radial-gradient(700px 380px at 90% 0%, rgba(69,104,255,.28), transparent 60%),
+  radial-gradient(520px 300px at 0% 100%, rgba(69,104,255,.14), transparent 60%), var(--navy-900); }
+.review-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: clamp(32px, 5vw, 72px); align-items: start; }
+.review-grid > * { min-width: 0; }
+.review-copy { display: grid; gap: 18px; }
+.review-copy h2 { color: var(--white); }
+.review-lede { font-size: var(--step-1); color: var(--on-navy-dim); max-width: 56ch; }
+.review-steps { display: grid; gap: 22px; margin-top: 8px; }
+.review-steps h3 { font: 600 .78rem/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--electric-hi); margin-bottom: 10px; }
+.review-steps p { color: var(--on-navy-dim); max-width: 60ch; }
+.ticks--light li { color: var(--on-navy); }
+.ticks--light li::before { background: var(--electric-hi); }
+.review-card { background: var(--white); border-radius: 22px; padding: clamp(22px, 3vw, 34px); box-shadow: 0 40px 80px -36px rgba(0,0,0,.7); }
+#review-form { display: grid; gap: 16px; }
+.field--check .check { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; font-size: .9rem; color: var(--slate); font-weight: 500; cursor: pointer; }
+.field--check input { width: 20px; height: 20px; min-height: 0; margin: 2px 0 0; accent-color: var(--electric); }
+.btn--block { width: 100%; min-height: 54px; font-size: 1rem; }
+.review-fine { font-size: .82rem; color: var(--mist); text-align: center; }
+.review-card .result h3 { color: var(--navy-900); }
+@media (max-width: 900px) { .review-grid { grid-template-columns: 1fr; } }
+
+.faq-wrap { display: grid; grid-template-columns: .8fr 1.2fr; gap: clamp(28px, 5vw, 64px); align-items: start; }
+.faq-wrap .section-head { margin-bottom: 0; }
+@media (max-width: 900px) { .faq-wrap { grid-template-columns: 1fr; } }
+
+/* Service facts (timeline / what we need) */
+.sd-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.sd-fact { background: var(--ivory); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 6px; align-content: start; }
+.sd-fact h3 { margin: 0 !important; }
+.sd-fact p, .sd-fact li { font-size: .93rem; }
+.results-note { display: flex; gap: 12px; align-items: flex-start; padding: 16px 18px; border-radius: 14px; background: var(--electric-soft); border: 1px solid #d3dcff; color: var(--navy-900); font-size: .95rem; margin-bottom: 40px; }
+.results-note svg { width: 20px; height: 20px; flex: none; color: var(--electric); margin-top: 2px; }
+@media (max-width: 680px) { .sd-facts { grid-template-columns: 1fr; } }
+.plan-meta { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); font-size: .86rem; color: var(--slate); }
+.plan-meta b { color: var(--navy-900); }
+.plans-custom { margin-top: 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px; padding: 20px 24px; border: 1px dashed #c6cddd; border-radius: 16px; background: var(--white); }
+.plans-custom p { color: var(--slate); }
+.plans-custom b { color: var(--navy-900); }
+@media (max-width: 680px) { .plans-custom .btn { width: 100%; } }
+.hero-aside { font-size: .98rem !important; color: var(--on-navy-dim); }
+.hero-aside a { color: var(--white); font-weight: 700; }
+.prose a { overflow-wrap: anywhere; }
+@media (max-width: 680px) { .filter { min-height: 42px; } }

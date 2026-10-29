@@ -18,6 +18,7 @@
       { label: "WhatsApp 2", display: "+1 943-202-0628", number: "19432020628" }
     ]
   };
+  window.BMA_CONFIG = CONFIG;
 
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
@@ -295,7 +296,8 @@
       return /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(\/\S*)?$/i.test(v) ? "" : "Enter a web address such as yourstore.com, or leave it blank.";
     },
     "f-service": function (v) { return v ? "" : "Choose the service you need."; },
-    "f-details": function (v) { return v.trim().length >= 20 ? "" : "Tell us a little more about your project (at least 20 characters)."; }
+    "f-details": function (v) { return v.trim().length >= 20 ? "" : "Tell us a little more about your project (at least 20 characters)."; },
+    "f-consent": function () { var c = document.getElementById("f-consent"); return !c || c.checked ? "" : "Please tick the box so we can reply to your enquiry."; }
   };
 
   function setError(id, msg) {
@@ -586,4 +588,72 @@
   });
   var leak = document.querySelector(".lc-cta");
   if (leak) leak.addEventListener("click", function () { g("event", "store_check_cta", {}); });
+})();
+
+/* Free store review form (short lead form) */
+(function () {
+  "use strict";
+  var form = document.getElementById("review-form");
+  if (!form) return;
+  var CONFIG = window.BMA_CONFIG || { formEndpoint: "", email: "support@brainiacmarketingagency.com", whatsapp: [{ number: "18592109302", display: "+1 859-210-9302" }] };
+  var result = document.getElementById("review-result");
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  var rules = {
+    "r-url": function (v) { v = v.trim(); return /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(\/\S*)?$/i.test(v) ? "" : "Enter your store's web address, for example yourstore.com."; },
+    "r-name": function (v) { return v.trim().length >= 2 ? "" : "Enter your name."; },
+    "r-email": function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ? "" : "Enter a valid email address, for example you@yourstore.com."; },
+    "r-challenge": function (v) { return v ? "" : "Choose your main challenge."; },
+    "r-consent": function () { return el("r-consent").checked ? "" : "Please tick the box so we can contact you about your review."; }
+  };
+  function setErr(id, msg) {
+    var input = el(id), field = input.closest(".field"), err = field.querySelector(".error");
+    field.classList.toggle("invalid", !!msg); input.setAttribute("aria-invalid", msg ? "true" : "false");
+    if (err) { err.textContent = msg; err.hidden = !msg; }
+  }
+  function check(id) { var msg = rules[id](el(id).value || ""); setErr(id, msg); return !msg; }
+  Object.keys(rules).forEach(function (id) {
+    var i = el(id); if (!i) return;
+    i.addEventListener(i.type === "checkbox" ? "change" : "blur", function () { if (i.type === "checkbox" || i.value) check(id); });
+    i.addEventListener("input", function () { if (i.closest(".field").classList.contains("invalid")) check(id); });
+  });
+  function vals() {
+    return { url: el("r-url").value.trim(), name: el("r-name").value.trim(), email: el("r-email").value.trim(),
+             challenge: el("r-challenge").value, details: el("r-details").value.trim() };
+  }
+  function text(v) {
+    return ["Free store review request - Brainiac Marketing Agency", "", "Store: " + v.url, "Name: " + v.name, "Email: " + v.email,
+            "Main challenge: " + v.challenge, "Details: " + (v.details || "None")].join("\n");
+  }
+  function show(html, cls) { result.className = "result " + cls; result.innerHTML = html; result.hidden = false; result.setAttribute("tabindex", "-1"); result.focus(); }
+  function ready(v, failed) {
+    var t = text(v);
+    var wa = "https://wa.me/" + CONFIG.whatsapp[0].number + "?text=" + encodeURIComponent(t);
+    var mail = "mailto:" + CONFIG.email + "?subject=" + encodeURIComponent("Free store review: " + v.url) + "&body=" + encodeURIComponent(t);
+    show((failed ? "<h3>We couldn't send your request, but it's saved below</h3>" : "<h3>Your request is ready to send</h3>") +
+      "<p>Send it to us on WhatsApp or by email and we'll start your review.</p><pre id=\"review-text\">" + esc(t) + "</pre>" +
+      "<div class=\"btn-row\"><a class=\"btn btn--primary\" href=\"" + wa + "\" target=\"_blank\" rel=\"noopener\">Send on WhatsApp</a>" +
+      "<a class=\"btn btn--outline\" href=\"" + mail + "\">Send by email</a></div>", "result--ready");
+    form.hidden = true;
+  }
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (el("r-company") && el("r-company").value) return;
+    var ok = Object.keys(rules).map(check).every(Boolean);
+    if (!ok) { var f = form.querySelector(".field.invalid input, .field.invalid select"); if (f) f.focus(); return; }
+    var v = vals();
+    if (typeof window.gtag === "function") window.gtag("event", "generate_lead", { form: "free_store_review", challenge: v.challenge });
+    if (!CONFIG.formEndpoint) { ready(v, false); return; }
+    var btn = form.querySelector("button[type=submit]"), label = btn.textContent;
+    btn.disabled = true; btn.textContent = "Sending…";
+    fetch(CONFIG.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ form: "Free store review", store: v.url, name: v.name, email: v.email, challenge: v.challenge, message: v.details, consent: "yes", _subject: "Free store review: " + v.url }) })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        form.hidden = true;
+        show("<h3>Thanks, " + esc(v.name.split(" ")[0]) + ". Your request is in.</h3><p>We'll review <b>" + esc(v.url) + "</b> and email your findings to <b>" + esc(v.email) + "</b> within 3 business days. If you have a question in the meantime, message us on WhatsApp at " + esc(CONFIG.whatsapp[0].display) + ".</p>", "result--ok");
+      })
+      .catch(function () { ready(v, true); })
+      .then(function () { btn.disabled = false; btn.textContent = label; });
+  });
 })();
