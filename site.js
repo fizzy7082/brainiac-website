@@ -535,3 +535,14 @@
   });
   window.addEventListener("pageshow", function () { root.classList.remove("leaving"); });
 })();
+
+/* Swipe hints under horizontal rows on phones */
+(function () {
+  var arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  Array.prototype.slice.call(document.querySelectorAll(".services-grid, .xp, .works")).forEach(function (row) {
+    var hint = document.createElement("p");
+    hint.className = "swipe-hint"; hint.setAttribute("aria-hidden", "true");
+    hint.innerHTML = "Swipe to see more " + arrow;
+    row.parentNode.insertBefore(hint, row.nextSibling);
+  });
+})();

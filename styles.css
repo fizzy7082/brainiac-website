@@ -1095,3 +1095,136 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; }
 @media (prefers-reduced-motion: reduce) {
   .wa-btn::before, .wa-btn::after, .process.drawn .step-num, .service-card .icon { animation: none !important; }
 }
+
+.swipe-hint { display: none; }
+
+/* =====================================================================
+   v6 mobile pass
+   ===================================================================== */
+/* Contact page: stack details and form on tablets and phones */
+@media (max-width: 900px) {
+  .contact-grid { grid-template-columns: 1fr; }
+  .contact-grid .form-card { order: -1; }
+  .channels { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) { .channels { grid-template-columns: 1fr; } }
+.channel { grid-template-columns: 44px minmax(0, 1fr); }
+.channel .value { word-break: normal; overflow-wrap: anywhere; }
+
+@media (max-width: 680px) {
+  /* Rhythm */
+  .band { padding-block: 56px; }
+  .band--tight { padding-block: 40px; }
+  .section-head { margin-bottom: 28px; gap: 10px; }
+  .section-head p, .lede { font-size: 1rem; }
+  h2 { font-size: clamp(1.75rem, 1.2rem + 3vw, 2.1rem); }
+  .eyebrow { font-size: .7rem; letter-spacing: .12em; }
+
+  /* Hero */
+  .hero--v2 { padding-block: 32px 44px; }
+  .hero h1 { font-size: clamp(2.3rem, 1.6rem + 4vw, 2.8rem); }
+  .hero-copy { gap: 20px; }
+  .hero-copy > p { font-size: 1rem; }
+  .hero .btn-row { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .hero .btn-row .btn, .page-hero .btn-row .btn { width: 100%; }
+  .hero-points { gap: 6px 14px; font-size: .85rem; }
+  .hero-art { aspect-ratio: 1 / .78; margin-top: 4px; }
+  .ha-bars { display: none; }
+  .ha-desk { width: 88%; top: 4%; }
+  .ha-phone { width: 30%; top: 22%; }
+  .ha-dash { width: 62%; left: 2%; padding: 10px 12px; }
+  .ha-dash svg { height: 40px; }
+  .ha-kpis b { font-size: 11px; }
+  .page-hero { padding-block: 40px 44px; }
+
+  /* Swipe rows instead of long stacks */
+  .services-grid, .xp, .works {
+    display: grid; grid-auto-flow: column; grid-template-columns: none;
+    grid-auto-columns: 84%; gap: 14px;
+    overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+    scrollbar-width: none; padding: 4px 16px 18px; margin-inline: -16px;
+    scroll-padding-inline: 16px;
+  }
+  .services-grid::-webkit-scrollbar, .xp::-webkit-scrollbar, .works::-webkit-scrollbar { display: none; }
+  .services-grid > *, .xp > *, .works > * { scroll-snap-align: start; }
+  .xp { background: transparent; border: 0; border-radius: 0; }
+  .xp li { border: 1px solid var(--navy-line); border-radius: 18px; }
+  .works .work[hidden] { display: none !important; }
+  .swipe-hint { display: flex; align-items: center; gap: 8px; font-size: .82rem; font-weight: 600; color: var(--mist); margin-top: 2px; }
+  .swipe-hint svg { width: 16px; height: 16px; animation: nudge 1.8s ease-in-out infinite; }
+  @keyframes nudge { 0%, 100% { translate: 0 0; } 50% { translate: 5px 0; } }
+
+  /* Values: compact 2-up grid */
+  .values { grid-template-columns: 1fr 1fr; }
+  .value { padding: 18px 16px; gap: 8px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .value:nth-child(2n) { border-right: 0; }
+  .value:last-child { grid-column: 1 / -1; border-bottom: 0; border-right: 0; }
+  .value .icon { width: 36px; height: 36px; border-radius: 10px; }
+  .value h3 { font-size: .95rem; }
+  .value p { font-size: .84rem; }
+
+  /* Filters: one swipeable row */
+  .filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -16px; padding-inline: 16px; }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter { flex: none; padding: 10px 14px; font-size: .85rem; }
+
+  /* Work cards a bit tighter */
+  .work-body { padding: 18px 18px 20px; gap: 10px; }
+  .work h3 { font-size: 1.15rem; }
+  .work-body p { font-size: .9rem; }
+
+  /* Why + store check */
+  .checks li { font-size: .95rem; }
+  .split .btn-row .btn { width: 100%; }
+
+  /* Process: tighter */
+  .process { gap: 20px; }
+
+  /* Carousels: arrows smaller */
+  .carousel-btn { width: 42px; height: 42px; }
+  .carousel-controls { margin-top: 18px; }
+  .tcard2 { padding: 22px 20px 20px; gap: 16px; }
+  .tcard2 blockquote { font-size: .98rem; }
+
+  /* Comparison table: sticky first column so it reads while swiping */
+  .compare { font-size: .85rem; min-width: 760px; }
+  .compare th, .compare td { padding: 12px 12px; }
+  .compare th[scope="row"], .compare thead th:first-child { position: sticky; left: 0; background: var(--white); z-index: 1; box-shadow: 1px 0 0 var(--line); min-width: 130px; }
+  .compare thead th:first-child { background: var(--ivory); }
+  .table-wrap::before { content: "Swipe to compare \2192"; display: block; padding: 10px 14px 0; font-size: .8rem; font-weight: 600; color: var(--mist); }
+
+  /* Terms: 2-up compact */
+  .terms-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .term { padding: 16px 14px; }
+  .term h3 { font-size: .92rem; }
+  .term p { font-size: .82rem; }
+
+  /* CTA bands */
+  .cta-inner .btn-row { display: grid; grid-template-columns: 1fr; width: 100%; }
+  .cta-inner .btn { width: 100%; }
+
+  /* Contact form */
+  .form-card { padding: 22px 18px; }
+  .form-foot { flex-direction: column; align-items: stretch; }
+  .form-foot .btn { width: 100%; }
+
+  /* Footer */
+  .site-footer { padding-block: 48px 28px; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 28px 20px; }
+  .footer-brand, .footer-grid > div:last-child { grid-column: 1 / -1; }
+  .footer-bottom { flex-direction: column; gap: 6px; }
+
+  /* Floating WhatsApp: smaller, clear of content */
+  .wa-float { right: calc(14px + env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+  .wa-btn { width: 52px; height: 52px; }
+  .wa-btn svg { width: 26px; height: 26px; }
+  .site-footer { padding-bottom: 88px; }
+
+  /* Services page: headers not sticky, tighter */
+  .service-detail { padding-block: 40px; gap: 20px; }
+  .mini-steps { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 380px) {
+  .terms-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px) { .channel .value { font-size: .95rem; } .channel { padding: 16px; gap: 14px; } }
