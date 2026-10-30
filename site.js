@@ -218,7 +218,7 @@
       var leaks = keys.filter(function (k) { return answers[k] === "no"; });
       keys.forEach(function (k, i) { meter[i].className = answers[k] === "no" ? "on-no" : answers[k] === "yes" ? "on-yes" : ""; });
       cta.classList.toggle("is-hot", leaks.length > 0);
-      if (!done) { msg.textContent = "Answer the questions to see how many sales leaks your store may have."; cta.firstChild.textContent = "Get my free store review "; return; }
+      if (!done) { msg.textContent = "Answer the questions to see how many sales leaks your store may have."; cta.firstChild.textContent = "Get help fixing my store "; return; }
       if (done < keys.length) {
         msg.innerHTML = leaks.length ? "So far: <b>" + leaks.length + " possible leak" + (leaks.length > 1 ? "s" : "") + "</b>. Keep going." : (keys.length - done) + " to go.";
         return;
@@ -590,7 +590,7 @@
   if (leak) leak.addEventListener("click", function () { g("event", "store_check_cta", {}); });
 })();
 
-/* Free store review form (short lead form) */
+/* Proposal request form (short lead form) */
 (function () {
   "use strict";
   var form = document.getElementById("review-form");
@@ -604,7 +604,7 @@
     "r-name": function (v) { return v.trim().length >= 2 ? "" : "Enter your name."; },
     "r-email": function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ? "" : "Enter a valid email address, for example you@yourstore.com."; },
     "r-challenge": function (v) { return v ? "" : "Choose your main challenge."; },
-    "r-consent": function () { return el("r-consent").checked ? "" : "Please tick the box so we can contact you about your review."; }
+    "r-consent": function () { return el("r-consent").checked ? "" : "Please tick the box so we can contact you about your request."; }
   };
   function setErr(id, msg) {
     var input = el(id), field = input.closest(".field"), err = field.querySelector(".error");
@@ -622,16 +622,16 @@
              challenge: el("r-challenge").value, details: el("r-details").value.trim() };
   }
   function text(v) {
-    return ["Free store review request - Brainiac Marketing Agency", "", "Store: " + v.url, "Name: " + v.name, "Email: " + v.email,
+    return ["Proposal request - Brainiac Marketing Agency", "", "Store: " + v.url, "Name: " + v.name, "Email: " + v.email,
             "Main challenge: " + v.challenge, "Details: " + (v.details || "None")].join("\n");
   }
   function show(html, cls) { result.className = "result " + cls; result.innerHTML = html; result.hidden = false; result.setAttribute("tabindex", "-1"); result.focus(); }
   function ready(v, failed) {
     var t = text(v);
     var wa = "https://wa.me/" + CONFIG.whatsapp[0].number + "?text=" + encodeURIComponent(t);
-    var mail = "mailto:" + CONFIG.email + "?subject=" + encodeURIComponent("Free store review: " + v.url) + "&body=" + encodeURIComponent(t);
+    var mail = "mailto:" + CONFIG.email + "?subject=" + encodeURIComponent("Proposal request: " + v.url) + "&body=" + encodeURIComponent(t);
     show((failed ? "<h3>We couldn't send your request, but it's saved below</h3>" : "<h3>Your request is ready to send</h3>") +
-      "<p>Send it to us on WhatsApp or by email and we'll start your review.</p><pre id=\"review-text\">" + esc(t) + "</pre>" +
+      "<p>Send it to us on WhatsApp or by email and we'll prepare your proposal.</p><pre id=\"review-text\">" + esc(t) + "</pre>" +
       "<div class=\"btn-row\"><a class=\"btn btn--primary\" href=\"" + wa + "\" target=\"_blank\" rel=\"noopener\">Send on WhatsApp</a>" +
       "<a class=\"btn btn--outline\" href=\"" + mail + "\">Send by email</a></div>", "result--ready");
     form.hidden = true;
@@ -642,16 +642,16 @@
     var ok = Object.keys(rules).map(check).every(Boolean);
     if (!ok) { var f = form.querySelector(".field.invalid input, .field.invalid select"); if (f) f.focus(); return; }
     var v = vals();
-    if (typeof window.gtag === "function") window.gtag("event", "generate_lead", { form: "free_store_review", challenge: v.challenge });
+    if (typeof window.gtag === "function") window.gtag("event", "generate_lead", { form: "proposal_request", challenge: v.challenge });
     if (!CONFIG.formEndpoint) { ready(v, false); return; }
     var btn = form.querySelector("button[type=submit]"), label = btn.textContent;
     btn.disabled = true; btn.textContent = "Sending…";
     fetch(CONFIG.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify({ form: "Free store review", store: v.url, name: v.name, email: v.email, challenge: v.challenge, message: v.details, consent: "yes", _subject: "Free store review: " + v.url }) })
+      body: JSON.stringify({ form: "Proposal request", store: v.url, name: v.name, email: v.email, challenge: v.challenge, message: v.details, consent: "yes", _subject: "Proposal request: " + v.url }) })
       .then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
         form.hidden = true;
-        show("<h3>Thanks, " + esc(v.name.split(" ")[0]) + ". Your request is in.</h3><p>We'll review <b>" + esc(v.url) + "</b> and email your findings to <b>" + esc(v.email) + "</b> within 3 business days. If you have a question in the meantime, message us on WhatsApp at " + esc(CONFIG.whatsapp[0].display) + ".</p>", "result--ok");
+        show("<h3>Thanks, " + esc(v.name.split(" ")[0]) + ". Your request is in.</h3><p>We'll review <b>" + esc(v.url) + "</b> and email your proposal to <b>" + esc(v.email) + "</b> within 3 business days. If you have a question in the meantime, message us on WhatsApp at " + esc(CONFIG.whatsapp[0].display) + ".</p>", "result--ok");
       })
       .catch(function () { ready(v, true); })
       .then(function () { btn.disabled = false; btn.textContent = label; });
