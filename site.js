@@ -18,7 +18,7 @@
     /* Consultation fee shown on the booking page, for example "$50". Leave
        empty until the amount is approved. */
     consultFee: "",
-    formEndpoint: "",
+    formEndpoint: "https://formsubmit.co/ajax/support@brainiacmarketingagency.com",
     email: "support@brainiacmarketingagency.com",
     whatsapp: [
       { label: "WhatsApp 1", display: "+1 859-210-9302", number: "18592109302" },
@@ -27,23 +27,26 @@
   };
   window.BMA_CONFIG = CONFIG;
 
-  /* Send options for hand-off messages: WhatsApp, Gmail, Outlook, email app, copy */
+  /* Fallback shown only if automatic sending fails */
   window.BMA_sendOptions = function (subject, text, preId) {
-    function e(x) { return String(x).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
-    var to = CONFIG.email, su = encodeURIComponent(subject), bo = encodeURIComponent(text);
-    var wa = "https://wa.me/" + CONFIG.whatsapp[0].number + "?text=" + bo;
-    var gmail = "https://mail.google.com/mail/?view=cm&fs=1&to=" + encodeURIComponent(to) + "&su=" + su + "&body=" + bo;
-    var outlook = "https://outlook.live.com/mail/0/deeplink/compose?to=" + encodeURIComponent(to) + "&subject=" + su + "&body=" + bo;
-    var mailto = "mailto:" + to + "?subject=" + su + "&body=" + bo;
-    return '<div class="send-opts">' +
-      '<a class="btn btn--primary" href="' + wa + '" target="_blank" rel="noopener">Send on WhatsApp</a>' +
-      '<div class="send-email"><span class="send-label">Or send by email to <b>' + e(to) + '</b>:</span>' +
-        '<div class="send-email-btns">' +
-          '<a class="btn btn--outline" href="' + gmail + '" target="_blank" rel="noopener">Gmail</a>' +
-          '<a class="btn btn--outline" href="' + outlook + '" target="_blank" rel="noopener">Outlook</a>' +
-          '<a class="btn btn--outline" href="' + mailto + '">Email app</a>' +
-          '<button type="button" class="btn btn--outline" data-copy="' + e(text) + '" data-copy-target="' + preId + '">Copy message</button>' +
-        '</div></div></div>';
+    var wa = "https://wa.me/" + CONFIG.whatsapp[0].number + "?text=" + encodeURIComponent(text);
+    return '<div class="send-opts"><a class="btn btn--primary" href="' + wa + '" target="_blank" rel="noopener">Send on WhatsApp instead</a>' +
+      '<span class="send-label">Or email it to <b>' + CONFIG.email + '</b>.</span></div>';
+  };
+
+  /* Send a form to the inbox (FormSubmit). Resolves {ok:true} only on real success. */
+  window.BMA_post = function (opts) {
+    var data = {};
+    try { data = JSON.parse(opts.body); } catch (e) {}
+    data._template = "table"; data._captcha = "false";
+    if (data.email) data._replyto = data.email;
+    return fetch(CONFIG.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(data) })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (!r.ok || String(j.success) !== "true") throw new Error((j && j.message) || ("HTTP " + r.status));
+          return { ok: true };
+        });
+      });
   };
 
   function $(sel, root) { return (root || document).querySelector(sel); }
@@ -383,7 +386,7 @@
     var subject = "Project enquiry: " + v.service + " (" + v.name + ")";
     show(
       '<h3>Your message is ready to send</h3>' +
-      '<p>Choose how to send it. Each option opens a message with your details already filled in.</p>' +
+      '<p>Please try again in a moment, or send it to us another way.</p>' +
       '<pre id="composed">' + esc(text) + '</pre>' +
       window.BMA_sendOptions(subject, text, "composed") +
       '<p><button type="button" class="link-arrow" id="edit-again" style="background:none;border:0;padding:0;color:var(--electric);cursor:pointer;font:inherit;font-weight:700">Edit your message</button></p>',
@@ -408,7 +411,7 @@
     var btn = $("button[type=submit]", form);
     var label = btn.textContent;
     btn.disabled = true; btn.textContent = "Sending…";
-    fetch(CONFIG.formEndpoint, {
+    window.BMA_post({
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify({
@@ -653,7 +656,7 @@
     var t = text(v);
     var wa = "https://wa.me/" + CONFIG.whatsapp[0].number + "?text=" + encodeURIComponent(t);
     show((failed ? "<h3>We couldn't send your request, but it's saved below</h3>" : "<h3>Your request is ready to send</h3>") +
-      "<p>Choose how to send it. Each option opens a message with your details already filled in.</p><pre id=\"review-text\">" + esc(t) + "</pre>" +
+      "<p>Please try again in a moment, or send it to us another way.</p><pre id=\"review-text\">" + esc(t) + "</pre>" +
       window.BMA_sendOptions("Proposal request: " + v.url, t, "review-text"), "result--ready");
     form.hidden = true;
   }
@@ -667,7 +670,7 @@
     if (!CONFIG.formEndpoint) { ready(v, false); return; }
     var btn = form.querySelector("button[type=submit]"), label = btn.textContent;
     btn.disabled = true; btn.textContent = "Sending…";
-    fetch(CONFIG.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    window.BMA_post({ method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify({ form: "Proposal request", store: v.url, name: v.name, email: v.email, challenge: v.challenge, message: v.details, consent: "yes", _subject: "Proposal request: " + v.url }) })
       .then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
@@ -751,15 +754,15 @@
                 "Reason: " + v.reason, "Preferred date and time: " + v.times, "", "Duration: 30 minutes, Google Meet"].join("\n");
     function handoff(failed) {
       show((failed ? "<h3>We couldn't send your request, but it's saved below</h3>" : "<h3>Your request is ready to send</h3>") +
-        "<p>Choose how to send it. Each option opens a message with your details already filled in. This is a request, not a confirmed booking: we'll reply to confirm the time and the fee.</p>" +
+        "<p>Please try again in a moment, or send it to us another way. This is a request, not a confirmed booking.</p>" +
         "<pre id=\"book-text\">" + esc(text) + "</pre>" + window.BMA_sendOptions("Consultation request: " + v.name + " (" + v.country + ")", text, "book-text"), "result--ready");
       form.hidden = true;
     }
     if (!CONFIG.formEndpoint) { handoff(false); return; }
     var btn = form.querySelector("button[type=submit]"), label = btn.textContent;
     btn.disabled = true; btn.textContent = "Sending…";
-    fetch(CONFIG.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify({ form: "Consultation request", name: v.name, email: v.email, country: v.country, store: v.url, reason: v.reason, preferred_times: v.times, consent: "yes", _subject: "Consultation request: " + v.name }) })
+    window.BMA_post({ method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ form: "Consultation request", name: v.name, email: v.email, country: v.country, store: v.url, reason: v.reason, preferred_times: v.times, consent: "yes", _subject: "Consultation request: " + v.name + " (" + v.country + ")" }) })
       .then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
         form.hidden = true;
