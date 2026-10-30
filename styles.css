@@ -1468,3 +1468,20 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; }
 .work--client:hover .cw-phone { transform: translateY(-9px); }
 .work-cat .em-live { color: #1f7a4d; background: #e7f5ee; border-color: #bfe3cf; }
 @media (prefers-reduced-motion: reduce) { .cw-view img { transition: none; } }
+
+/* v12 live work on booking */
+.book-live { border-top: 1px solid var(--navy-line); padding-top: 20px; display: grid; gap: 10px; }
+.book-live h3 { color: var(--white); font-size: 1.05rem; }
+.book-live p { font-size: .9rem; }
+.book-live ul { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 8px; }
+.book-live a { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid var(--navy-line); color: var(--white); text-decoration: none; font-weight: 600; font-size: .92rem; transition: background-color .2s ease, border-color .2s ease; }
+.book-live a:hover { background: rgba(255,255,255,.08); border-color: var(--electric-hi); }
+.book-live img { width: 40px; height: 56px; object-fit: cover; object-position: top; border-radius: 7px; flex: none; background: #fff; }
+.book-live span { display: grid; gap: 2px; min-width: 0; }
+.book-live small { font-weight: 500; font-size: .78rem; color: var(--on-navy-dim); overflow-wrap: anywhere; }
+.book-live .book-live-more { background: none; border: 0; padding: 4px 0 0; color: var(--electric-hi); font-size: .9rem; }
+.book-live .book-live-more:hover { background: none; text-decoration: underline; }
+.live-work { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+.live-work ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.live-work a { display: inline-flex; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--white); color: var(--navy-900); font-weight: 600; font-size: .88rem; text-decoration: none; }
+.live-work a:hover { border-color: var(--electric); color: var(--electric); }

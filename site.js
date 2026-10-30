@@ -760,6 +760,12 @@
     if (typeof window.gtag === "function") window.gtag("event", "consultation_request", { reason: v.reason });
     var text = ["Consultation time request - Brainiac Marketing Agency", "", "Name: " + v.name, "Email: " + v.email, "Country: " + v.country, "Store: " + v.url,
                 "Reason: " + v.reason, "Preferred date and time: " + v.times, "", "Duration: 30 minutes, Google Meet"].join("\n");
+    function liveWork() {
+      var stores = [["The Pet &amp; Home Store", "https://thepetandhomestore.com/"], ["Paws and Whiskers", "https://pawsandwhiskerspet.com/"], ["Robin's Nest Home", "https://robinsnesthome.com/"]];
+      return "<div class=\"live-work\"><b>While you wait, see our work live</b><ul>" + stores.map(function (x) {
+        return "<li><a href=\"" + x[1] + "\" target=\"_blank\" rel=\"noopener\">" + x[0] + " <span aria-hidden=\"true\">&#8599;</span></a></li>";
+      }).join("") + "</ul></div>";
+    }
     function handoff(failed) {
       show((failed ? "<h3>We couldn't send your request, but it's saved below</h3>" : "<h3>Your request is ready to send</h3>") +
         "<p>Please try again in a moment, or send it to us another way. This is a request, not a confirmed booking.</p>" +
@@ -774,7 +780,7 @@
       .then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
         form.hidden = true;
-        show("<h3>Request received, " + esc(v.name.split(" ")[0]) + "</h3><p>This is not a confirmed booking yet. We'll email <b>" + esc(v.email) + "</b> to confirm a time and the fee before anything is final.</p>", "result--ok");
+        show("<h3>Request received, " + esc(v.name.split(" ")[0]) + "</h3><p>This is not a confirmed booking yet. We'll email <b>" + esc(v.email) + "</b> to confirm a time and the fee before anything is final.</p>" + liveWork(), "result--ok");
       })
       .catch(function () { handoff(true); })
       .then(function () { btn.disabled = false; btn.textContent = label; });
