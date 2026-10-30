@@ -1435,3 +1435,15 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; }
 .send-email-btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .send-email-btns .btn { min-height: 42px; padding: 0 16px; font-size: .9rem; }
 @media (max-width: 680px) { .send-opts > .btn { justify-self: stretch; } .send-email-btns { display: grid; grid-template-columns: 1fr 1fr; } }
+/* v10 mobile fixes */
+@media (max-width: 680px) { .services-grid--9 { grid-template-columns: none; } }
+.service-card, .services-grid > *, .xp > *, .works > *, .carousel-slide { position: relative; }
+.site-footer .footer-cta, .site-footer .footer-cta:hover { color: var(--white); }
+.channel--book .acts .btn { background: var(--electric); border-radius: 999px; display: inline-flex; align-items: center; }
+.channel--book .acts .btn:hover { background: #3557f0; }
+.slot-field, .cal { min-width: 0; }
+.cal-dow, .cal-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+@media (max-width: 400px) { .cal { padding: 10px 8px; } .cal-dow, .cal-grid { gap: 3px; } .cal-dow span { font-size: .62rem; letter-spacing: 0; } .cal-day { min-height: 0; font-size: .86rem; border-radius: 8px; } .channel .value { font-size: .9rem; letter-spacing: -.01em; } }
+@media (max-width: 340px) { .slots { grid-template-columns: repeat(2, 1fr); } }
+.book-facts { grid-template-columns: minmax(0, 1fr); }
+.book-alt, .book-facts dd { overflow-wrap: anywhere; }
