@@ -766,6 +766,34 @@
         return "<li><a href=\"" + x[1] + "\" target=\"_blank\" rel=\"noopener\">" + x[0] + " <span aria-hidden=\"true\">&#8599;</span></a></li>";
       }).join("") + "</ul></div>";
     }
+    var startISO = el("b-times").getAttribute("data-start");
+    function stamp(d) { return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, ""); }
+    var cal = null;
+    if (startISO) {
+      var st = new Date(startISO), en = new Date(st.getTime() + 30 * 60000);
+      var title = "Brainiac Marketing consultation (pending confirmation)";
+      var details = "Your requested 30-minute consultation with Brainiac Marketing Agency about " + v.url + ".\n\n" +
+        "We'll email " + v.email + " to confirm this time, the fee and your Google Meet link. The booking is final once we confirm.\n\n" +
+        "See our work live:\n- The Pet & Home Store: https://thepetandhomestore.com/\n- Paws and Whiskers: https://pawsandwhiskerspet.com/\n- Robin's Nest Home: https://robinsnesthome.com/\n\n" +
+        "Questions? Email " + CONFIG.email + " or WhatsApp +1 859-210-9302.";
+      var g = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent(title) + "&dates=" + stamp(st) + "/" + stamp(en) + "&details=" + encodeURIComponent(details) + "&location=" + encodeURIComponent("Google Meet (link sent by email)");
+      var o = "https://outlook.live.com/calendar/0/deeplink/compose?path=%2Fcalendar%2Faction%2Fcompose&rru=addevent&subject=" + encodeURIComponent(title) + "&startdt=" + encodeURIComponent(st.toISOString()) + "&enddt=" + encodeURIComponent(en.toISOString()) + "&body=" + encodeURIComponent(details) + "&location=" + encodeURIComponent("Google Meet (link sent by email)");
+      var ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Brainiac Marketing Agency//Consultation//EN", "BEGIN:VEVENT",
+        "UID:" + stamp(st) + "-" + Math.random().toString(36).slice(2) + "@brainiacmarketingagency.com", "DTSTAMP:" + stamp(new Date()),
+        "DTSTART:" + stamp(st), "DTEND:" + stamp(en), "SUMMARY:" + title, "DESCRIPTION:" + details.replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;"),
+        "LOCATION:Google Meet (link sent by email)",
+        "BEGIN:VALARM", "TRIGGER:-P1D", "ACTION:DISPLAY", "DESCRIPTION:Consultation with Brainiac tomorrow", "END:VALARM",
+        "BEGIN:VALARM", "TRIGGER:-PT1H", "ACTION:DISPLAY", "DESCRIPTION:Consultation with Brainiac in 1 hour", "END:VALARM",
+        "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+      cal = { google: g, outlook: o, ics: "data:text/calendar;charset=utf-8," + encodeURIComponent(ics) };
+    }
+    function calBlock() {
+      if (!cal) return "";
+      return "<div class=\"add-cal\"><b>Get a reminder</b><p>Save the requested time to your calendar so you get a reminder. We'll update you by email once it's confirmed.</p><div class=\"add-cal-btns\">" +
+        "<a class=\"btn btn--primary\" href=\"" + cal.google + "\" target=\"_blank\" rel=\"noopener\" data-cal=\"google\">Google Calendar</a>" +
+        "<a class=\"btn btn--ghost-dark\" href=\"" + cal.ics + "\" download=\"brainiac-consultation.ics\" data-cal=\"ics\">Apple / Outlook (.ics)</a>" +
+        "<a class=\"btn btn--ghost-dark\" href=\"" + cal.outlook + "\" target=\"_blank\" rel=\"noopener\" data-cal=\"outlook\">Outlook.com</a></div></div>";
+    }
     function handoff(failed) {
       show((failed ? "<h3>We couldn't send your request, but it's saved below</h3>" : "<h3>Your request is ready to send</h3>") +
         "<p>Please try again in a moment, or send it to us another way. This is a request, not a confirmed booking.</p>" +
@@ -776,11 +804,12 @@
     var btn = form.querySelector("button[type=submit]"), label = btn.textContent;
     btn.disabled = true; btn.textContent = "Sending…";
     window.BMA_post({ method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify({ form: "Consultation request", name: v.name, email: v.email, country: v.country, store: v.url, reason: v.reason, preferred_times: v.times, consent: "yes", _subject: "Consultation request: " + v.name + " (" + v.country + ")" }) })
+      body: JSON.stringify({ form: "Consultation request", name: v.name, email: v.email, country: v.country, store: v.url, reason: v.reason, preferred_times: v.times, add_to_your_calendar: cal ? cal.google.replace("(pending%20confirmation)", "-%20" + encodeURIComponent(v.name)) : "", consent: "yes", _subject: "Consultation request: " + v.name + " (" + v.country + ")" }) })
       .then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
         form.hidden = true;
-        show("<h3>Request received, " + esc(v.name.split(" ")[0]) + "</h3><p>This is not a confirmed booking yet. We'll email <b>" + esc(v.email) + "</b> to confirm a time and the fee before anything is final.</p>" + liveWork(), "result--ok");
+        show("<h3>Request received, " + esc(v.name.split(" ")[0]) + "</h3><p>This is not a confirmed booking yet. We'll email <b>" + esc(v.email) + "</b> to confirm a time and the fee before anything is final.</p>" + calBlock() + liveWork(), "result--ok");
+        if (typeof window.gtag === "function") document.querySelectorAll("[data-cal]").forEach(function (a) { a.addEventListener("click", function () { window.gtag("event", "add_to_calendar", { calendar: a.getAttribute("data-cal") }); }); });
       })
       .catch(function () { handoff(true); })
       .then(function () { btn.disabled = false; btn.textContent = label; });
@@ -823,7 +852,8 @@
     if (selDate && selTime) {
       var txt = fmtDate(selDate) + ", " + fmtTime(selTime[0], selTime[1]) + " (" + tz.replace(/_/g, " ") + ")";
       hidden.value = txt; picked.textContent = "Selected: " + txt;
-    } else { hidden.value = ""; picked.textContent = ""; }
+      hidden.setAttribute("data-start", new Date(selDate.getFullYear(), selDate.getMonth(), selDate.getDate(), selTime[0], selTime[1]).toISOString());
+    } else { hidden.value = ""; picked.textContent = ""; hidden.removeAttribute("data-start"); }
     hidden.dispatchEvent(new Event("input", { bubbles: true }));
   }
 

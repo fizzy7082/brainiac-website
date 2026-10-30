@@ -1485,3 +1485,10 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; }
 .live-work ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .live-work a { display: inline-flex; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--white); color: var(--navy-900); font-weight: 600; font-size: .88rem; text-decoration: none; }
 .live-work a:hover { border-color: var(--electric); color: var(--electric); }
+.add-cal { margin-top: 14px; padding: 14px; border-radius: 14px; background: var(--white); border: 1px solid var(--line); display: grid; gap: 8px; }
+.add-cal p { font-size: .9rem; color: var(--slate); }
+.add-cal-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.add-cal-btns .btn { min-height: 40px; padding: 0 14px; font-size: .86rem; }
+.btn--ghost-dark { background: var(--white); color: var(--navy-900); border: 1.5px solid var(--line); }
+.btn--ghost-dark:hover { border-color: var(--electric); color: var(--electric); }
+@media (max-width: 480px) { .add-cal-btns .btn { flex: 1 1 100%; } }
