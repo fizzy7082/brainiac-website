@@ -710,7 +710,7 @@
     "b-email": function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ? "" : "Enter a valid email address, for example you@yourstore.com."; },
     "b-url": function (v) { return /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(\/\S*)?$/i.test(v.trim()) ? "" : "Enter your business or store web address, for example yourstore.com."; },
     "b-reason": function (v) { return v ? "" : "Choose the main reason for booking."; },
-    "b-times": function (v) { return v.trim().length >= 3 ? "" : "Tell us a few days and times that suit you, with your time zone."; },
+    "b-times": function (v) { return v.trim().length >= 3 ? "" : "Pick a preferred date and time."; },
     "b-consent": function () { return el("b-consent").checked ? "" : "Please tick the box so we can contact you to arrange the call."; }
   };
   function setErr(id, msg) {
@@ -729,11 +729,11 @@
     e.preventDefault();
     if (el("b-company").value) return;
     var ok = Object.keys(rules).map(check).every(Boolean);
-    if (!ok) { var first = form.querySelector(".field.invalid input, .field.invalid select"); if (first) first.focus(); return; }
+    if (!ok) { var first = form.querySelector(".field.invalid input:not([type=hidden]), .field.invalid select"); if (first && !first.closest('.slot-field')) first.focus(); return; }
     var v = { name: el("b-name").value.trim(), email: el("b-email").value.trim(), url: el("b-url").value.trim(), reason: el("b-reason").value, times: el("b-times").value.trim() };
     if (typeof window.gtag === "function") window.gtag("event", "consultation_request", { reason: v.reason });
     var text = ["Consultation time request - Brainiac Marketing Agency", "", "Name: " + v.name, "Email: " + v.email, "Store: " + v.url,
-                "Reason: " + v.reason, "Preferred times: " + v.times, "", "Duration: 30 minutes, Google Meet"].join("\n");
+                "Reason: " + v.reason, "Preferred date and time: " + v.times, "", "Duration: 30 minutes, Google Meet"].join("\n");
     function handoff(failed) {
       var wa = "https://wa.me/" + ((CONFIG.whatsapp && CONFIG.whatsapp[0].number) || "18592109302") + "?text=" + encodeURIComponent(text);
       var mail = "mailto:" + (CONFIG.email || "support@brainiacmarketingagency.com") + "?subject=" + encodeURIComponent("Consultation request: " + v.name) + "&body=" + encodeURIComponent(text);
@@ -755,4 +755,90 @@
       .catch(function () { handoff(true); })
       .then(function () { btn.disabled = false; btn.textContent = label; });
   });
+})();
+
+/* Booking page: date and time picker for the time request */
+(function () {
+  "use strict";
+  var grid = document.getElementById("b-cal-grid");
+  if (!grid) return;
+  var monthEl = document.getElementById("b-cal-month"), slotsEl = document.getElementById("b-slots");
+  var hidden = document.getElementById("b-times"), picked = document.getElementById("b-picked"), tzEl = document.getElementById("b-tz");
+  var CONFIG = window.BMA_CONFIG || {};
+  var DAYS = CONFIG.bookingDays || [1, 2, 3, 4, 5];          // Mon-Fri
+  var START = CONFIG.bookingStartHour || 9, END = CONFIG.bookingEndHour || 18, STEP = 30, AHEAD = 45;
+  var tz = "your local time";
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
+  tzEl.textContent = "(" + tz.replace(/_/g, " ") + ")";
+
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var first = new Date(today); first.setDate(first.getDate() + 1);
+  var last = new Date(today); last.setDate(last.getDate() + AHEAD);
+  var view = new Date(first.getFullYear(), first.getMonth(), 1);
+  var selDate = null, selTime = null;
+  // If almost no bookable days are left this month, open on next month
+  (function () {
+    var n = 0, d = new Date(first);
+    while (d.getMonth() === first.getMonth()) { if (allowedEarly(d)) n++; d.setDate(d.getDate() + 1); }
+    if (n < 3) view = new Date(first.getFullYear(), first.getMonth() + 1, 1);
+    function allowedEarly(x) { return x >= first && x <= last && DAYS.indexOf(x.getDay()) > -1; }
+  })();
+
+  function sameDay(a, b) { return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  function allowed(d) { return d >= first && d <= last && DAYS.indexOf(d.getDay()) > -1; }
+  function fmtDate(d) { return d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" }); }
+  function fmtTime(h, m) { var d = new Date(2000, 0, 1, h, m); return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }); }
+
+  function update() {
+    if (selDate && selTime) {
+      var txt = fmtDate(selDate) + ", " + fmtTime(selTime[0], selTime[1]) + " (" + tz.replace(/_/g, " ") + ")";
+      hidden.value = txt; picked.textContent = "Selected: " + txt;
+    } else { hidden.value = ""; picked.textContent = ""; }
+    hidden.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  function renderSlots() {
+    slotsEl.innerHTML = "";
+    if (!selDate) { slotsEl.innerHTML = '<p class="slots-empty">Pick a date first.</p>'; return; }
+    for (var m = START * 60; m < END * 60; m += STEP) {
+      var h = Math.floor(m / 60), mi = m % 60;
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "slot"; b.textContent = fmtTime(h, mi);
+      var on = selTime && selTime[0] === h && selTime[1] === mi;
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      (function (hh, mm) { b.addEventListener("click", function () { selTime = [hh, mm]; renderSlots(); update(); }); })(h, mi);
+      slotsEl.appendChild(b);
+    }
+  }
+
+  function renderCal() {
+    monthEl.textContent = view.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    grid.innerHTML = "";
+    var lead = (new Date(view.getFullYear(), view.getMonth(), 1).getDay() + 6) % 7;
+    for (var i = 0; i < lead; i++) { var sp = document.createElement("span"); sp.className = "cal-pad"; grid.appendChild(sp); }
+    var dim = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
+    for (var dnum = 1; dnum <= dim; dnum++) {
+      var d = new Date(view.getFullYear(), view.getMonth(), dnum);
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "cal-day"; b.textContent = dnum;
+      b.setAttribute("aria-label", fmtDate(d));
+      if (!allowed(d)) { b.disabled = true; }
+      if (sameDay(d, selDate)) b.setAttribute("aria-pressed", "true"); else b.setAttribute("aria-pressed", "false");
+      if (sameDay(d, today)) b.classList.add("is-today");
+      (function (dd) { b.addEventListener("click", function () { selDate = dd; selTime = null; renderCal(); renderSlots(); update(); var s = slotsEl.querySelector(".slot"); if (s) s.focus({ preventScroll: true }); }); })(d);
+      grid.appendChild(b);
+    }
+    var prev = document.querySelector('.cal-nav[data-cal="-1"]'), next = document.querySelector('.cal-nav[data-cal="1"]');
+    prev.disabled = view <= new Date(first.getFullYear(), first.getMonth(), 1);
+    next.disabled = view >= new Date(last.getFullYear(), last.getMonth(), 1);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".cal-nav"), function (n) {
+    n.addEventListener("click", function () { view = new Date(view.getFullYear(), view.getMonth() + parseInt(n.getAttribute("data-cal"), 10), 1); renderCal(); });
+  });
+  // If submitted without a slot, move focus to the calendar
+  var form = document.getElementById("book-form");
+  if (form) form.addEventListener("submit", function () {
+    setTimeout(function () { if (!hidden.value) { var d = grid.querySelector(".cal-day:not([disabled])"); if (d) d.focus(); } }, 0);
+  });
+  renderCal(); renderSlots();
 })();

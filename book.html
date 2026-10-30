@@ -96,7 +96,7 @@ gtag('config', 'G-YDD6K9VNMY');
 
       <!-- Until online scheduling is connected: an honest time request, not a booking -->
       <div class="book-request" id="book-request">
-        <div class="book-notice" role="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><p><b>Online scheduling is being set up.</b> For now, send us a time request below. This is not a confirmed booking: we'll reply by email to confirm a time and the fee before anything is final.</p></div>
+        <div class="book-notice" role="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><p><b>Pick your preferred date and time below.</b> We'll confirm it, or suggest the closest time we have, by email along with the fee. Your booking is final once we confirm.</p></div>
         <form id="book-form" class="form" novalidate>
           <div class="field"><label for="b-name">Full name</label><input id="b-name" type="text" autocomplete="name" required aria-describedby="e-b-name"><span class="error" id="e-b-name" hidden></span></div>
           <div class="field"><label for="b-email">Email address</label><input id="b-email" type="email" autocomplete="email" required aria-describedby="e-b-email"><span class="error" id="e-b-email" hidden></span></div>
@@ -119,7 +119,19 @@ gtag('config', 'G-YDD6K9VNMY');
               <option data-slug="package-signature">Signature package</option>
               <option data-slug="other">Something else</option>
             </select><span class="error" id="e-b-reason" hidden></span></div>
-          <div class="field field--full"><label for="b-times">Preferred days and times</label><input id="b-times" type="text" required placeholder="For example: Tue or Wed afternoon, Eastern time" aria-describedby="e-b-times b-times-hint"><span class="hint" id="b-times-hint">Include your time zone so we can match it.</span><span class="error" id="e-b-times" hidden></span></div>
+          <div class="field field--full slot-field">
+            <span class="label-like" id="b-date-label">Preferred date</span>
+            <div class="cal" id="b-cal" role="group" aria-labelledby="b-date-label">
+              <div class="cal-head"><button type="button" class="cal-nav" data-cal="-1" aria-label="Previous month">&#8249;</button><b class="cal-month" id="b-cal-month" aria-live="polite"></b><button type="button" class="cal-nav" data-cal="1" aria-label="Next month">&#8250;</button></div>
+              <div class="cal-dow" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+              <div class="cal-grid" id="b-cal-grid"></div>
+            </div>
+            <span class="label-like" id="b-time-label">Preferred time <small id="b-tz"></small></span>
+            <div class="slots" id="b-slots" role="group" aria-labelledby="b-time-label"><p class="slots-empty">Pick a date first.</p></div>
+            <input type="hidden" id="b-times" aria-describedby="e-b-times">
+            <span class="hint" id="b-picked" aria-live="polite"></span>
+            <span class="error" id="e-b-times" hidden></span>
+          </div>
           <div class="hp" aria-hidden="true"><label for="b-company">Company</label><input id="b-company" type="text" tabindex="-1" autocomplete="off"></div>
           <div class="field field--full field--check"><label class="check"><input id="b-consent" type="checkbox" required aria-describedby="e-b-consent"><span>I agree that Brainiac Marketing Agency may contact me to arrange this consultation. See our <a href="privacy.html">Privacy Policy</a>.</span></label><span class="error" id="e-b-consent" hidden></span></div>
           <div class="form-foot"><p>We'll confirm a time and the fee by email before anything is booked.</p><button class="btn btn--primary" type="submit">Send time request</button></div>
