@@ -11,6 +11,13 @@
      WhatsApp, so no enquiry is ever silently lost.
      ------------------------------------------------------------------ */
   var CONFIG = {
+    /* Booking: paste your Calendly event link here, for example
+       "https://calendly.com/brainiac/consultation". When set, the booking page
+       shows the live calendar instead of the time-request form. */
+    calendlyUrl: "",
+    /* Consultation fee shown on the booking page, for example "$50". Leave
+       empty until the amount is approved. */
+    consultFee: "",
     formEndpoint: "",
     email: "support@brainiacmarketingagency.com",
     whatsapp: [
@@ -654,6 +661,98 @@
         show("<h3>Thanks, " + esc(v.name.split(" ")[0]) + ". Your request is in.</h3><p>We'll review <b>" + esc(v.url) + "</b> and email your proposal to <b>" + esc(v.email) + "</b> within 3 business days. If you have a question in the meantime, message us on WhatsApp at " + esc(CONFIG.whatsapp[0].display) + ".</p>", "result--ok");
       })
       .catch(function () { ready(v, true); })
+      .then(function () { btn.disabled = false; btn.textContent = label; });
+  });
+})();
+
+/* Booking page: Calendly embed when configured, honest time request otherwise */
+(function () {
+  "use strict";
+  var page = document.getElementById("book-request");
+  if (!page) return;
+  var CONFIG = window.BMA_CONFIG || {};
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  // Which topic brought them here (?topic=growth-package etc.)
+  var topic = "";
+  try { topic = new URLSearchParams(location.search).get("topic") || ""; } catch (e) {}
+  var reasonSel = el("b-reason"), reasonText = "";
+  if (topic && reasonSel) {
+    Array.prototype.forEach.call(reasonSel.options, function (o) { if (o.getAttribute("data-slug") === topic) { reasonSel.value = o.value; reasonText = o.value; } });
+  }
+
+  if (CONFIG.consultFee) el("book-fee").textContent = CONFIG.consultFee + " for a 30-minute consultation, paid when you book.";
+
+  // Live scheduler
+  if (CONFIG.calendlyUrl) {
+    var url = CONFIG.calendlyUrl + (CONFIG.calendlyUrl.indexOf("?") > -1 ? "&" : "?") +
+      "embed_domain=" + encodeURIComponent(location.hostname || "brainiacmarketingagency.com") +
+      "&embed_type=Inline&hide_gdpr_banner=1" + (reasonText ? "&a2=" + encodeURIComponent(reasonText) : "");
+    var f = document.createElement("iframe");
+    f.src = url; f.title = "Choose a consultation time"; f.loading = "lazy";
+    f.setAttribute("allow", "payment");
+    el("book-embed").appendChild(f);
+    el("book-direct").href = CONFIG.calendlyUrl;
+    el("book-scheduler").hidden = false;
+    page.hidden = true;
+    window.addEventListener("message", function (e) {
+      if (e.origin !== "https://calendly.com" || !e.data || e.data.event !== "calendly.event_scheduled") return;
+      if (typeof window.gtag === "function") window.gtag("event", "consultation_booked", { topic: reasonText || topic });
+    });
+    return;
+  }
+
+  // Time request (not a booking)
+  var form = el("book-form"), result = el("book-result");
+  var rules = {
+    "b-name": function (v) { return v.trim().length >= 2 ? "" : "Enter your full name."; },
+    "b-email": function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ? "" : "Enter a valid email address, for example you@yourstore.com."; },
+    "b-url": function (v) { return /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(\/\S*)?$/i.test(v.trim()) ? "" : "Enter your business or store web address, for example yourstore.com."; },
+    "b-reason": function (v) { return v ? "" : "Choose the main reason for booking."; },
+    "b-times": function (v) { return v.trim().length >= 3 ? "" : "Tell us a few days and times that suit you, with your time zone."; },
+    "b-consent": function () { return el("b-consent").checked ? "" : "Please tick the box so we can contact you to arrange the call."; }
+  };
+  function setErr(id, msg) {
+    var i = el(id), fld = i.closest(".field"), er = fld.querySelector(".error");
+    fld.classList.toggle("invalid", !!msg); i.setAttribute("aria-invalid", msg ? "true" : "false");
+    if (er) { er.textContent = msg; er.hidden = !msg; }
+  }
+  function check(id) { var m = rules[id](el(id).value || ""); setErr(id, m); return !m; }
+  Object.keys(rules).forEach(function (id) {
+    var i = el(id);
+    i.addEventListener(i.type === "checkbox" ? "change" : "blur", function () { if (i.type === "checkbox" || i.value) check(id); });
+    i.addEventListener("input", function () { if (i.closest(".field").classList.contains("invalid")) check(id); });
+  });
+  function show(html, cls) { result.className = "result " + cls; result.innerHTML = html; result.hidden = false; result.setAttribute("tabindex", "-1"); result.focus(); }
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (el("b-company").value) return;
+    var ok = Object.keys(rules).map(check).every(Boolean);
+    if (!ok) { var first = form.querySelector(".field.invalid input, .field.invalid select"); if (first) first.focus(); return; }
+    var v = { name: el("b-name").value.trim(), email: el("b-email").value.trim(), url: el("b-url").value.trim(), reason: el("b-reason").value, times: el("b-times").value.trim() };
+    if (typeof window.gtag === "function") window.gtag("event", "consultation_request", { reason: v.reason });
+    var text = ["Consultation time request - Brainiac Marketing Agency", "", "Name: " + v.name, "Email: " + v.email, "Store: " + v.url,
+                "Reason: " + v.reason, "Preferred times: " + v.times, "", "Duration: 30 minutes, Google Meet"].join("\n");
+    function handoff(failed) {
+      var wa = "https://wa.me/" + ((CONFIG.whatsapp && CONFIG.whatsapp[0].number) || "18592109302") + "?text=" + encodeURIComponent(text);
+      var mail = "mailto:" + (CONFIG.email || "support@brainiacmarketingagency.com") + "?subject=" + encodeURIComponent("Consultation request: " + v.name) + "&body=" + encodeURIComponent(text);
+      show((failed ? "<h3>We couldn't send your request, but it's saved below</h3>" : "<h3>Your request is ready to send</h3>") +
+        "<p>Send it on WhatsApp or by email. This is a request, not a confirmed booking: we'll reply to confirm a time and the fee.</p>" +
+        "<pre>" + esc(text) + "</pre><div class=\"btn-row\"><a class=\"btn btn--primary\" href=\"" + wa + "\" target=\"_blank\" rel=\"noopener\">Send on WhatsApp</a><a class=\"btn btn--outline\" href=\"" + mail + "\">Send by email</a></div>", "result--ready");
+      form.hidden = true;
+    }
+    if (!CONFIG.formEndpoint) { handoff(false); return; }
+    var btn = form.querySelector("button[type=submit]"), label = btn.textContent;
+    btn.disabled = true; btn.textContent = "Sending…";
+    fetch(CONFIG.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ form: "Consultation request", name: v.name, email: v.email, store: v.url, reason: v.reason, preferred_times: v.times, consent: "yes", _subject: "Consultation request: " + v.name }) })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        form.hidden = true;
+        show("<h3>Request received, " + esc(v.name.split(" ")[0]) + "</h3><p>This is not a confirmed booking yet. We'll email <b>" + esc(v.email) + "</b> to confirm a time and the fee before anything is final.</p>", "result--ok");
+      })
+      .catch(function () { handoff(true); })
       .then(function () { btn.disabled = false; btn.textContent = label; });
   });
 })();
