@@ -18,7 +18,9 @@
     /* Consultation fee shown on the booking page, for example "$50". Leave
        empty until the amount is approved. */
     consultFee: "",
-    formEndpoint: "https://formsubmit.co/ajax/support@brainiacmarketingagency.com",
+    formEndpoint: "https://api.web3forms.com/submit",
+    /* Only for Web3Forms: the access key it emails you (safe to be public). */
+    formAccessKey: "376bb497-7b4d-4ca7-83f1-51d685116e69",
     email: "support@brainiacmarketingagency.com",
     whatsapp: [
       { label: "WhatsApp 1", display: "+1 859-210-9302", number: "18592109302" },
@@ -38,12 +40,18 @@
   window.BMA_post = function (opts) {
     var data = {};
     try { data = JSON.parse(opts.body); } catch (e) {}
-    data._template = "table"; data._captcha = "false";
+    if (/formsubmit\.co/.test(CONFIG.formEndpoint)) { data._template = "table"; data._captcha = "false"; }
+    if (CONFIG.formAccessKey) data.access_key = CONFIG.formAccessKey;
+    if (/web3forms\.com/.test(CONFIG.formEndpoint)) {
+      if (data._subject) data.subject = data._subject;
+      data.from_name = "Brainiac Marketing Agency website";
+      delete data._subject; delete data._replyto;
+    }
     if (data.email) data._replyto = data.email;
     return fetch(CONFIG.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(data) })
       .then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (j) {
-          if (!r.ok || String(j.success) !== "true") throw new Error((j && j.message) || ("HTTP " + r.status));
+          if (!r.ok || !(String(j.success) === "true" || j.ok === true)) throw new Error((j && j.message) || ("HTTP " + r.status));
           return { ok: true };
         });
       });
