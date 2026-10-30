@@ -1427,3 +1427,11 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; }
 .slot[aria-pressed="true"] { background: var(--electric); border-color: var(--electric); color: var(--white); }
 #b-picked { font-weight: 600; color: var(--navy-900); }
 @media (max-width: 680px) { .cal { max-width: none; } .slots { grid-template-columns: repeat(3, 1fr); } }
+.send-opts { display: grid; gap: 14px; }
+.send-opts > .btn { justify-self: start; }
+.send-email { display: grid; gap: 8px; }
+.send-label { font-size: .9rem; color: var(--slate); }
+.send-label b { color: var(--navy-900); overflow-wrap: anywhere; }
+.send-email-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.send-email-btns .btn { min-height: 42px; padding: 0 16px; font-size: .9rem; }
+@media (max-width: 680px) { .send-opts > .btn { justify-self: stretch; } .send-email-btns { display: grid; grid-template-columns: 1fr 1fr; } }

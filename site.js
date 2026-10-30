@@ -27,6 +27,25 @@
   };
   window.BMA_CONFIG = CONFIG;
 
+  /* Send options for hand-off messages: WhatsApp, Gmail, Outlook, email app, copy */
+  window.BMA_sendOptions = function (subject, text, preId) {
+    function e(x) { return String(x).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+    var to = CONFIG.email, su = encodeURIComponent(subject), bo = encodeURIComponent(text);
+    var wa = "https://wa.me/" + CONFIG.whatsapp[0].number + "?text=" + bo;
+    var gmail = "https://mail.google.com/mail/?view=cm&fs=1&to=" + encodeURIComponent(to) + "&su=" + su + "&body=" + bo;
+    var outlook = "https://outlook.live.com/mail/0/deeplink/compose?to=" + encodeURIComponent(to) + "&subject=" + su + "&body=" + bo;
+    var mailto = "mailto:" + to + "?subject=" + su + "&body=" + bo;
+    return '<div class="send-opts">' +
+      '<a class="btn btn--primary" href="' + wa + '" target="_blank" rel="noopener">Send on WhatsApp</a>' +
+      '<div class="send-email"><span class="send-label">Or send by email to <b>' + e(to) + '</b>:</span>' +
+        '<div class="send-email-btns">' +
+          '<a class="btn btn--outline" href="' + gmail + '" target="_blank" rel="noopener">Gmail</a>' +
+          '<a class="btn btn--outline" href="' + outlook + '" target="_blank" rel="noopener">Outlook</a>' +
+          '<a class="btn btn--outline" href="' + mailto + '">Email app</a>' +
+          '<button type="button" class="btn btn--outline" data-copy="' + e(text) + '" data-copy-target="' + preId + '">Copy message</button>' +
+        '</div></div></div>';
+  };
+
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
 
@@ -298,6 +317,7 @@
   var rules = {
     "f-name": function (v) { return v.trim().length >= 2 ? "" : "Enter your full name."; },
     "f-email": function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ? "" : "Enter a valid email address, for example name@store.com."; },
+    "f-country": function (v) { return v ? "" : "Choose your country."; },
     "f-url": function (v) {
       v = v.trim(); if (!v) return "";
       return /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(\/\S*)?$/i.test(v) ? "" : "Enter a web address such as yourstore.com, or leave it blank.";
@@ -325,6 +345,7 @@
     return {
       name: $("#f-name").value.trim(),
       email: $("#f-email").value.trim(),
+      country: $("#f-country").value,
       url: $("#f-url").value.trim(),
       service: $("#f-service").value,
       budget: $("#f-budget").value,
@@ -337,6 +358,7 @@
       "",
       "Name: " + v.name,
       "Email: " + v.email,
+      "Country: " + v.country,
       "Store or website: " + (v.url || "Not provided"),
       "Service needed: " + v.service,
       "Estimated budget: " + (v.budget || "Not provided"),
@@ -359,17 +381,11 @@
   function showReady(v) {
     var text = compose(v);
     var subject = "Project enquiry: " + v.service + " (" + v.name + ")";
-    var mail = "mailto:" + CONFIG.email + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(text);
-    var wa = "https://wa.me/" + CONFIG.whatsapp[0].number + "?text=" + encodeURIComponent(text);
     show(
       '<h3>Your message is ready to send</h3>' +
-      '<p>Choose how to send it. WhatsApp opens a chat with your message filled in. You can also copy it and email it to <b>' + CONFIG.email + '</b>.</p>' +
+      '<p>Choose how to send it. Each option opens a message with your details already filled in.</p>' +
       '<pre id="composed">' + esc(text) + '</pre>' +
-      '<div class="btn-row">' +
-        '<a class="btn btn--primary" href="' + wa + '" target="_blank" rel="noopener">Send on WhatsApp</a>' +
-        '<a class="btn btn--outline" href="' + mail + '">Open in email app</a>' +
-        '<button type="button" class="btn btn--outline" data-copy="' + esc(text) + '" data-copy-target="composed">Copy message</button>' +
-      '</div>' +
+      window.BMA_sendOptions(subject, text, "composed") +
       '<p><button type="button" class="link-arrow" id="edit-again" style="background:none;border:0;padding:0;color:var(--electric);cursor:pointer;font:inherit;font-weight:700">Edit your message</button></p>',
       "result--ready"
     );
@@ -396,7 +412,7 @@
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify({
-        name: v.name, email: v.email, website: v.url, service: v.service,
+        name: v.name, email: v.email, country: v.country, website: v.url, service: v.service,
         budget: v.budget, message: v.details, _subject: "Project enquiry: " + v.service
       })
     }).then(function (r) {
@@ -636,11 +652,9 @@
   function ready(v, failed) {
     var t = text(v);
     var wa = "https://wa.me/" + CONFIG.whatsapp[0].number + "?text=" + encodeURIComponent(t);
-    var mail = "mailto:" + CONFIG.email + "?subject=" + encodeURIComponent("Proposal request: " + v.url) + "&body=" + encodeURIComponent(t);
     show((failed ? "<h3>We couldn't send your request, but it's saved below</h3>" : "<h3>Your request is ready to send</h3>") +
-      "<p>Send it to us on WhatsApp or by email and we'll prepare your proposal.</p><pre id=\"review-text\">" + esc(t) + "</pre>" +
-      "<div class=\"btn-row\"><a class=\"btn btn--primary\" href=\"" + wa + "\" target=\"_blank\" rel=\"noopener\">Send on WhatsApp</a>" +
-      "<a class=\"btn btn--outline\" href=\"" + mail + "\">Send by email</a></div>", "result--ready");
+      "<p>Choose how to send it. Each option opens a message with your details already filled in.</p><pre id=\"review-text\">" + esc(t) + "</pre>" +
+      window.BMA_sendOptions("Proposal request: " + v.url, t, "review-text"), "result--ready");
     form.hidden = true;
   }
   form.addEventListener("submit", function (e) {
@@ -708,6 +722,7 @@
   var rules = {
     "b-name": function (v) { return v.trim().length >= 2 ? "" : "Enter your full name."; },
     "b-email": function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ? "" : "Enter a valid email address, for example you@yourstore.com."; },
+    "b-country": function (v) { return v ? "" : "Choose your country."; },
     "b-url": function (v) { return /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(\/\S*)?$/i.test(v.trim()) ? "" : "Enter your business or store web address, for example yourstore.com."; },
     "b-reason": function (v) { return v ? "" : "Choose the main reason for booking."; },
     "b-times": function (v) { return v.trim().length >= 3 ? "" : "Pick a preferred date and time."; },
@@ -730,23 +745,21 @@
     if (el("b-company").value) return;
     var ok = Object.keys(rules).map(check).every(Boolean);
     if (!ok) { var first = form.querySelector(".field.invalid input:not([type=hidden]), .field.invalid select"); if (first && !first.closest('.slot-field')) first.focus(); return; }
-    var v = { name: el("b-name").value.trim(), email: el("b-email").value.trim(), url: el("b-url").value.trim(), reason: el("b-reason").value, times: el("b-times").value.trim() };
+    var v = { name: el("b-name").value.trim(), email: el("b-email").value.trim(), country: el("b-country").value, url: el("b-url").value.trim(), reason: el("b-reason").value, times: el("b-times").value.trim() };
     if (typeof window.gtag === "function") window.gtag("event", "consultation_request", { reason: v.reason });
-    var text = ["Consultation time request - Brainiac Marketing Agency", "", "Name: " + v.name, "Email: " + v.email, "Store: " + v.url,
+    var text = ["Consultation time request - Brainiac Marketing Agency", "", "Name: " + v.name, "Email: " + v.email, "Country: " + v.country, "Store: " + v.url,
                 "Reason: " + v.reason, "Preferred date and time: " + v.times, "", "Duration: 30 minutes, Google Meet"].join("\n");
     function handoff(failed) {
-      var wa = "https://wa.me/" + ((CONFIG.whatsapp && CONFIG.whatsapp[0].number) || "18592109302") + "?text=" + encodeURIComponent(text);
-      var mail = "mailto:" + (CONFIG.email || "support@brainiacmarketingagency.com") + "?subject=" + encodeURIComponent("Consultation request: " + v.name) + "&body=" + encodeURIComponent(text);
       show((failed ? "<h3>We couldn't send your request, but it's saved below</h3>" : "<h3>Your request is ready to send</h3>") +
-        "<p>Send it on WhatsApp or by email. This is a request, not a confirmed booking: we'll reply to confirm a time and the fee.</p>" +
-        "<pre>" + esc(text) + "</pre><div class=\"btn-row\"><a class=\"btn btn--primary\" href=\"" + wa + "\" target=\"_blank\" rel=\"noopener\">Send on WhatsApp</a><a class=\"btn btn--outline\" href=\"" + mail + "\">Send by email</a></div>", "result--ready");
+        "<p>Choose how to send it. Each option opens a message with your details already filled in. This is a request, not a confirmed booking: we'll reply to confirm the time and the fee.</p>" +
+        "<pre id=\"book-text\">" + esc(text) + "</pre>" + window.BMA_sendOptions("Consultation request: " + v.name + " (" + v.country + ")", text, "book-text"), "result--ready");
       form.hidden = true;
     }
     if (!CONFIG.formEndpoint) { handoff(false); return; }
     var btn = form.querySelector("button[type=submit]"), label = btn.textContent;
     btn.disabled = true; btn.textContent = "Sending…";
     fetch(CONFIG.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify({ form: "Consultation request", name: v.name, email: v.email, store: v.url, reason: v.reason, preferred_times: v.times, consent: "yes", _subject: "Consultation request: " + v.name }) })
+      body: JSON.stringify({ form: "Consultation request", name: v.name, email: v.email, country: v.country, store: v.url, reason: v.reason, preferred_times: v.times, consent: "yes", _subject: "Consultation request: " + v.name }) })
       .then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
         form.hidden = true;
@@ -841,4 +854,21 @@
     setTimeout(function () { if (!hidden.value) { var d = grid.querySelector(".cal-day:not([disabled])"); if (d) d.focus(); } }, 0);
   });
   renderCal(); renderSlots();
+})();
+
+
+/* Country dropdowns: full list in the visitor's language, best guess preselected */
+(function () {
+  var sels = document.querySelectorAll("select[data-countries]");
+  if (!sels.length) return;
+  var codes = "AF AL DZ AD AO AG AR AM AU AT AZ BS BH BD BB BY BE BZ BJ BT BO BA BW BR BN BG BF BI CV KH CM CA CF TD CL CN CO KM CG CD CR CI HR CU CY CZ DK DJ DM DO EC EG SV GQ ER EE SZ ET FJ FI FR GA GM GE DE GH GR GD GT GN GW GY HT HN HK HU IS IN ID IR IQ IE IL IT JM JP JO KZ KE KI KW KG LA LV LB LS LR LY LI LT LU MO MG MW MY MV ML MT MH MR MU MX FM MD MC MN ME MA MZ MM NA NR NP NL NZ NI NE NG KP MK NO OM PK PW PS PA PG PY PE PH PL PT PR QA RO RU RW KN LC VC WS SM ST SA SN RS SC SL SG SK SI SB SO ZA KR SS ES LK SD SR SE CH SY TW TJ TZ TH TL TG TO TT TN TR TM TV UG UA AE GB US UY UZ VU VA VE VN YE ZM ZW".split(" ");
+  var names;
+  try { var dn = new Intl.DisplayNames([navigator.language || "en"], { type: "region" }); names = codes.map(function (c) { return [c, dn.of(c)]; }); }
+  catch (e) { names = codes.map(function (c) { return [c, c]; }); }
+  names.sort(function (a, b) { return a[1].localeCompare(b[1]); });
+  var guess = "";
+  try { var m = (navigator.language || "").match(/-([A-Z]{2})$/i); if (m) guess = m[1].toUpperCase(); } catch (e) {}
+  Array.prototype.forEach.call(sels, function (sel) {
+    names.forEach(function (n) { var o = document.createElement("option"); o.value = n[1]; o.textContent = n[1]; if (n[0] === guess) o.selected = true; sel.appendChild(o); });
+  });
 })();
