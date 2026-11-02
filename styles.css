@@ -1492,3 +1492,30 @@ h1, h2 { font-weight: 800; letter-spacing: -0.04em; }
 .btn--ghost-dark { background: var(--white); color: var(--navy-900); border: 1.5px solid var(--line); }
 .btn--ghost-dark:hover { border-color: var(--electric); color: var(--electric); }
 @media (max-width: 480px) { .add-cal-btns .btn { flex: 1 1 100%; } }
+
+/* v13 WhatsApp welcome widget */
+.wa-panel { width: min(340px, calc(100vw - 28px)); border-radius: 18px; transform-origin: bottom right; animation: wa-in .22s cubic-bezier(.2,.7,.2,1); }
+@keyframes wa-in { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
+.wa-panel header { display: grid; grid-template-columns: 40px 1fr 32px; gap: 12px; align-items: center; padding: 14px 14px 14px 16px; background: linear-gradient(135deg, var(--navy-900), #16214a); }
+.wa-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #fff; box-shadow: 0 0 0 2px #25d366; }
+.wa-panel header b { font-size: .98rem; color: #fff; }
+.wa-panel header span { display: flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--on-navy-dim); opacity: 1; }
+.wa-panel header span::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #25d366; }
+.wa-close { width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(255,255,255,.08); color: #fff; font-size: 1.3rem; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+.wa-close:hover { background: rgba(255,255,255,.18); }
+.wa-body { padding: 18px 16px 8px; background: #efeae2 radial-gradient(rgba(11,16,32,.035) 1px, transparent 1px) 0 0 / 14px 14px; }
+.wa-bubble { position: relative; margin: 0; max-width: 92%; background: #fff; color: var(--navy-900); padding: 12px 14px; border-radius: 4px 14px 14px 14px; font-size: .93rem; line-height: 1.5; box-shadow: 0 1px 1px rgba(11,16,32,.08); }
+.wa-actions { display: grid; gap: 8px; padding: 12px 14px 14px; background: #efeae2; }
+.wa-cta { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 16px; border-radius: 999px; background: #25d366; color: #fff !important; font-weight: 700; font-size: .95rem; text-decoration: none; box-shadow: 0 10px 22px -10px rgba(18,110,56,.7); transition: background-color .18s ease, transform .18s ease; }
+.wa-cta:hover { background: #1fb95a; transform: translateY(-1px); }
+.wa-cta svg { width: 20px; height: 20px; flex: none; }
+.wa-panel .wa-cta, .wa-panel .wa-alt { grid-template-columns: none; }
+.wa-panel a.wa-cta:hover { background: #1fb95a; }
+.wa-alt { display: block !important; text-align: center; padding: 2px 0 !important; font-size: .8rem; color: var(--slate) !important; text-decoration: underline; text-underline-offset: 2px; }
+.wa-panel a.wa-alt:hover { background: none; color: var(--navy-900) !important; }
+.wa-open .wa-btn::before, .wa-open .wa-btn::after { animation: none; opacity: 0; }
+@media (max-width: 680px) { .wa-panel { width: calc(100vw - 28px); max-width: 360px; } }
+@media (prefers-reduced-motion: reduce) { .wa-panel { animation: none; } }
+.wa-panel a.wa-cta { display: flex; grid-template-columns: none; padding: 0 16px; background: #128c4b; }
+.wa-panel a.wa-cta:hover { background: #0e7a40; }
+.wa-panel a.wa-cta span { color: #fff; font-size: .95rem; font-weight: 700; }

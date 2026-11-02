@@ -18,6 +18,7 @@
     /* Consultation fee shown on the booking page, for example "$50". Leave
        empty until the amount is approved. */
     consultFee: "",
+    visitEndpoint: "",   // visitor notifications: set to your Cloudflare Worker URL + "/visit" once it is deployed
     formEndpoint: "https://api.web3forms.com/submit",
     /* Only for Web3Forms: the access key it emails you (safe to be public). */
     formAccessKey: "376bb497-7b4d-4ca7-83f1-51d685116e69",
@@ -28,6 +29,37 @@
     ]
   };
   window.BMA_CONFIG = CONFIG;
+  window.BMA_device = function () {
+    var ua = navigator.userAgent || "";
+    if (/iPad|Tablet|PlayBook|Silk/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua)) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua))) return "tablet";
+    return /Mobi|iPhone|iPod|Android/i.test(ua) ? "mobile" : "desktop";
+  };
+  /* New-visitor notification: one ping per browsing session, only when an endpoint is configured.
+     Refreshes and page-to-page navigation reuse the same session, so they never re-notify. */
+  window.BMA_visitPing = function () {
+    if (!CONFIG.visitEndpoint) return;
+    try {
+      var consent = localStorage.getItem("bma-consent") || "";
+      if (consent === "no" || sessionStorage.getItem("bma-pinged")) return;
+      var sid = sessionStorage.getItem("bma-sid");
+      if (!sid) { sid = (Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10)); sessionStorage.setItem("bma-sid", sid); }
+      var ref = "", q = new URLSearchParams(location.search);
+      if (q.get("utm_source")) ref = q.get("utm_source") + (q.get("utm_medium") ? " / " + q.get("utm_medium") : "");
+      else if (document.referrer) { var h = new URL(document.referrer).hostname.replace(/^www\./, ""); if (h !== location.hostname.replace(/^www\./, "")) ref = h; }
+      var data = JSON.stringify({ sid: sid, page: location.pathname || "/", device: window.BMA_device(), source: ref || "Direct", session: window.BMA_sessionType(), consent: consent });
+      fetch(CONFIG.visitEndpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: data, keepalive: true, mode: "cors" })
+        .then(function (r) { if (r.ok || r.status === 204) sessionStorage.setItem("bma-pinged", "1"); })
+        .catch(function () {});
+    } catch (e) {}
+  };
+  window.BMA_sessionType = function () {
+    try {
+      var t = sessionStorage.getItem("bma-st");
+      if (!t) { t = localStorage.getItem("bma-seen") ? "returning" : "new"; sessionStorage.setItem("bma-st", t); localStorage.setItem("bma-seen", "1"); }
+      return t;
+    } catch (e) { return ""; }
+  };
+  window.BMA_visitPing();
 
   /* Fallback shown only if automatic sending fails */
   window.BMA_sendOptions = function (subject, text, preId) {
@@ -114,16 +146,24 @@
   /* ---------- Floating WhatsApp ---------- */
   var waBtn = $(".wa-btn"), waPanel = $("#wa-panel");
   if (waBtn && waPanel) {
+    var waClose = waPanel.querySelector(".wa-close");
+    var setWa = function (open, focusBack) {
+      waPanel.hidden = !open; waBtn.setAttribute("aria-expanded", String(open));
+      document.documentElement.classList.toggle("wa-open", open);
+      if (open) { var cta = waPanel.querySelector(".wa-cta"); if (cta) cta.focus({ preventScroll: true }); }
+      else if (focusBack) waBtn.focus();
+    };
     waBtn.addEventListener("click", function () {
-      var open = waBtn.getAttribute("aria-expanded") === "true";
-      waBtn.setAttribute("aria-expanded", String(!open));
-      waPanel.hidden = open;
+      var open = waBtn.getAttribute("aria-expanded") !== "true";
+      setWa(open, false);
+      if (open && typeof window.gtag === "function") window.gtag("event", "whatsapp_widget_open", { page_path: location.pathname });
     });
+    if (waClose) waClose.addEventListener("click", function () { setWa(false, true); });
     document.addEventListener("click", function (e) {
-      if (!waPanel.hidden && !e.target.closest(".wa-float")) { waPanel.hidden = true; waBtn.setAttribute("aria-expanded", "false"); }
+      if (!waPanel.hidden && !e.target.closest(".wa-float")) setWa(false, false);
     });
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && !waPanel.hidden) { waPanel.hidden = true; waBtn.setAttribute("aria-expanded", "false"); waBtn.focus(); }
+      if (e.key === "Escape" && !waPanel.hidden) setWa(false, true);
     });
   }
 
@@ -597,6 +637,7 @@
     if (b) {
       var yes = b.getAttribute("data-consent") === "yes";
       try { localStorage.setItem("bma-consent", yes ? "yes" : "no"); } catch (err) {}
+      if (yes && window.BMA_visitPing) window.BMA_visitPing();
       g("consent", "update", { analytics_storage: yes ? "granted" : "denied" });
       hide();
       return;
@@ -607,7 +648,11 @@
     var a = e.target.closest("a[href]");
     if (!a) return;
     var href = a.getAttribute("href") || "";
-    if (href.indexOf("wa.me/") > -1) g("event", "whatsapp_click", { link_url: href, page_path: location.pathname });
+    if (href.indexOf("wa.me/") > -1) {
+      /* A click opens WhatsApp; it does not mean a message was sent. */
+      var line = a.getAttribute("data-wa-line") || (href.indexOf("19432020628") > -1 ? "second" : "primary");
+      g("event", "whatsapp_click", { link_url: href.split("?")[0], page_path: location.pathname, click_source: a.closest(".wa-float") ? "chat_widget" : "page_link", whatsapp_line: line, device_category: window.BMA_device ? window.BMA_device() : "", session_type: window.BMA_sessionType ? window.BMA_sessionType() : "" });
+    }
     else if (href.indexOf("mailto:") === 0) g("event", "email_click", { page_path: location.pathname });
     else if (/contact\.html/.test(href) && a.classList.contains("btn")) g("event", "cta_click", { link_text: (a.textContent || "").trim().slice(0, 60), page_path: location.pathname });
   });
