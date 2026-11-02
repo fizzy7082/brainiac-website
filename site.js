@@ -654,7 +654,7 @@
       g("event", "whatsapp_click", { link_url: href.split("?")[0], page_path: location.pathname, click_source: a.closest(".wa-float") ? "chat_widget" : "page_link", whatsapp_line: line, device_category: window.BMA_device ? window.BMA_device() : "", session_type: window.BMA_sessionType ? window.BMA_sessionType() : "" });
     }
     else if (href.indexOf("mailto:") === 0) g("event", "email_click", { page_path: location.pathname });
-    else if (/contact\.html/.test(href) && a.classList.contains("btn")) g("event", "cta_click", { link_text: (a.textContent || "").trim().slice(0, 60), page_path: location.pathname });
+    else if (/(^|\/)contact(\.html)?([?#]|$)/.test(href) && a.classList.contains("btn")) g("event", "cta_click", { link_text: (a.textContent || "").trim().slice(0, 60), page_path: location.pathname });
   });
   var form = document.getElementById("contact-form");
   if (form) form.addEventListener("submit", function () {
